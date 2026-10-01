@@ -84,7 +84,7 @@ The Microphones page uses a selected-station workflow for detailed controls. Sta
 
 ## Control Pins
 
-Version `0.1.4` removes all control-pin exposure: every control has `UserPin = false` and `PinStyle = "None"`, `GetPins()` is empty, and the option to enable pins is removed. The plugin and diagnostics keep their on-screen controls. Debug pins are disabled through `ShowDebug = false`; the main plugin and Page Probe also clear and hide `plugin_show_debug` in `RectifyProperties()`.
+Version `0.1.4` removes all control-pin exposure: every control has `UserPin = false` and `PinStyle = "None"`, `GetPins()` is empty, and the option to enable pins is removed. The plugin keeps its on-screen controls. Debug pins are disabled through `ShowDebug = false`; `RectifyProperties()` also clears and hides `plugin_show_debug`.
 
 Replace or reinsert an existing component after reloading the updated plugin if the design retains previously exposed pins. Save the project before replacing components.
 
@@ -116,7 +116,6 @@ Local parser and command-matrix tests:
 lua test/parser_spec.lua
 lua test/layout_spec.lua
 lua test/plugin_load_spec.lua
-lua test/diagnostics_spec.lua
 ```
 
 The local tests validate:
@@ -134,21 +133,9 @@ The local tests validate:
 
 The generated file starts with `PluginInfo` and uses a private module loader. It does not depend on external Lua files or alter `package.preload`. Page layouts include only controls displayed on that page, following the [Q-SYS framework example](https://help.qsys.com/DeveloperHelp/Content/Code_Examples/Basic_Plugin_Framework.htm).
 
-Version `0.1.2` also fixes method lookup in the state and diagnostics constructors. Previously, runtime initialization failed at `state:set_connection()`. These tests use a simulated Q-SYS environment; insertion and rendering in Designer 10.4.0 still require validation in Designer. After updating, restart Designer and test the new version in a blank design before updating an existing project.
+Version `0.1.2` also fixes method lookup in the state and diagnostics constructors. Previously, runtime initialization failed at `state:set_connection()`. Automated tests use a simulated Q-SYS environment. The user confirmed that the main plugin `0.1.4` loads in Designer 10.4.0 after pin exposure was removed; hardware communication remains to be validated.
 
-## Designer Freeze Diagnostics
-
-The Designer 10.4.0 freeze persisted with `0.1.2`; its cause has not yet been confirmed. Version `0.1.3` removes repeated hidden layouts, defines battery percentages as numeric controls, exports only native control properties, and initializes combo choices in runtime.
-
-The build also creates two separate diagnostic plugins in `build/diagnostics/` with distinct IDs and names:
-
-1. `DCH-MXCW-01-Minimal.qplug`: two controls, a single default page, no modules, no runtime.
-2. `DCH-MXCW-02-UI-Only.qplug`: the complete UI and properties, without protocol, sockets, timers, or runtime code.
-3. `DCH-MXCW-03-Page-Probe.qplug`: one default page and only its controls (eight Setup controls on insertion). `Diagnostic Page` selects a section; `Diagnostic Scope` compares just that page against all definitions; `Diagnostic Appearance` compares original graphics/styling against plain controls. It has no runtime or exposed pins.
-
-Test the minimal plugin first in a blank design, then the UI-only plugin, then the full plugin. Record which step freezes. If the minimal plugin freezes, the complete MXCW UI/runtime is not needed to trigger it. If only the UI-only version freezes, investigate native control/layout conversion. If both diagnostics load and only the full version freezes, investigate the runtime/loading path. These diagnostics do not operate the Shure equipment and should not replace the production plugin.
-
-Designer 10.4.0 feedback: `01 Minimal` inserted successfully; `02 UI Only` froze. This isolates the reproduction to the design-time/UI portion. Use `03 Page Probe` next with defaults, before changing any diagnostic properties. This is a diagnostic build, not a confirmed fix.
+The temporary Minimal, UI Only, and Page Probe plugins were removed after the successful Designer loading test. The build produces only the main plugin. Parser, layout, and loading tests remain in `test/`.
 
 ## Known Limitations
 

@@ -53,25 +53,6 @@ def main() -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(bundle(entry, MODULES))
     print(OUT)
-    diagnostics = OUT.parent / "diagnostics"
-    diagnostics.mkdir(parents=True, exist_ok=True)
-    minimal = diagnostics / "DCH-MXCW-01-Minimal.qplug"
-    minimal.write_text((SRC / "diagnostics" / "minimal.qplug.lua").read_text())
-    ui_entry, separator, _ = entry.partition("\nif Controls then\n")
-    if not separator:
-        raise ValueError("Cannot isolate design-time entry")
-    ui_entry = ui_entry.replace('Name = "DCH~Shure~MXCW-MXCWAPT"',
-                                'Name = "DCH~Shure~MXCW-MXCWAPT Diagnostics~02 UI Only"')
-    ui_entry = ui_entry.replace('Id = "dch.shure.mxcwapt.control"',
-                                'Id = "41d6c23e-d3fb-4b51-a463-b175bd1c74ee"')
-    ui_only = diagnostics / "DCH-MXCW-02-UI-Only.qplug"
-    ui_only.write_text(bundle(ui_entry, ["properties", "controls", "layout"]))
-    print(minimal)
-    print(ui_only)
-    probe = diagnostics / "DCH-MXCW-03-Page-Probe.qplug"
-    probe.write_text(bundle((SRC / "diagnostics" / "page-probe.qplug.lua").read_text(),
-                            ["properties", "controls", "layout"]))
-    print(probe)
 
 
 if __name__ == "__main__":
