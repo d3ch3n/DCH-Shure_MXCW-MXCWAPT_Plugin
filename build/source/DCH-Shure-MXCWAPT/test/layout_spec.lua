@@ -41,7 +41,7 @@ for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
     for _, graphic in ipairs(graphics) do
       assert(graphic.Type == "Label" or graphic.Type == "GroupBox" or graphic.Type == "Image", "Invalid graphic type")
       if graphic.Type == "Label" then visible[#visible + 1] = { name = graphic.Text, item = graphic } end
-      if graphic.Type == "Image" then visible[#visible + 1] = { name = "Shure logo", item = graphic } end
+      if graphic.Type == "Image" then visible[#visible + 1] = { name = graphic.Name, item = graphic } end
     end
     for i, element in ipairs(visible) do
       local item = element.item

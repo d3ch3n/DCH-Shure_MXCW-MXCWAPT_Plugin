@@ -82,7 +82,7 @@ Each station has a `Seat Number N` control. Reports from the MXCWAPT are mapped 
 
 The Microphones page uses a selected-station workflow for detailed controls. Station and battery tables show up to 16 units per page. All pages use a 1008 x 584 pixel canvas with compact 24-pixel fields. Each page returns only its visible controls, and every control is assigned to at least one page.
 
-Version `0.1.5` follows the existing DCH Shure P300 visual model: white background, Shure logo, grey dividers and fields, blue mixer faders, and compact controls. Microphone gain and audio gains use vertical faders; Dante is arranged in ten channel strips. The original Shure logo is reused from the P300 project in `src/assets/shure-logo.jpeg` and embedded in the generated plugin, so installation needs only the `.qplug` file. All pins remain disabled.
+Version `0.1.5` follows the existing DCH Shure P300 visual model: white background, Shure logo, grey dividers and fields, blue mixer faders, and compact controls. Microphone gain and audio gains use vertical faders; Dante is arranged in ten channel strips. Version `0.1.6` adds the Dechen Technologies logo beside Shure on every page. Both logos are stored in `src/assets/` and embedded in the generated plugin, so installation needs only the `.qplug` file. All pins remain disabled.
 
 ## Control Pins
 

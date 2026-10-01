@@ -46,10 +46,14 @@ function Layout.get_layout(props)
     Type = "GroupBox", Position = { 4, 4 }, Size = { Layout.WIDTH - 8, Layout.HEIGHT - 8 },
     Fill = Colors.White, StrokeColor = Colors.Stroke, StrokeWidth = 1, ZOrder = -1,
   }
-  label(graphics, "DCH / Shure MXCW-MXCWAPT", 16, -20, 510, 20, true)
-  label(graphics, page, 16, 2, 510, 18)
+  label(graphics, "DCH / Shure MXCW-MXCWAPT", 16, -20, 480, 20, true)
+  label(graphics, page, 16, 2, 480, 18)
   graphics[#graphics + 1] = {
-    Type = "Image", Image = Assets.ShureLogo, Position = { 900, 14 }, Size = { 87, 44 },
+    Type = "Image", Name = "Dechen logo", Image = Assets.DechenLogo,
+    Position = { 736, 16 }, Size = { 144, 36 },
+  }
+  graphics[#graphics + 1] = {
+    Type = "Image", Name = "Shure logo", Image = Assets.ShureLogo, Position = { 900, 14 }, Size = { 87, 44 },
   }
   graphics[#graphics + 1] = {
     Type = "GroupBox", Position = { 9, 64 }, Size = { 990, 1 },

@@ -47,6 +47,8 @@ def bundle(entry: str, modules: list[str]) -> str:
         if mod == "assets":
             logo = base64.b64encode((SRC / "assets" / "shure-logo.jpeg").read_bytes()).decode("ascii")
             source = source.replace("__SHURE_LOGO_BASE64__", logo)
+            dechen_logo = base64.b64encode((SRC / "assets" / "dechen-logo.png").read_bytes()).decode("ascii")
+            source = source.replace("__DECHEN_LOGO_BASE64__", dechen_logo)
         chunks.append(source)
         chunks.append("\nend\n")
     chunks.append("\n")

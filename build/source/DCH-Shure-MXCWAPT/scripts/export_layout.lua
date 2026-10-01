@@ -15,6 +15,6 @@ for index, page in ipairs(GetPages(props)) do
       item.Text or item.Legend or name or "", item.FontSize or 11,
       color(item.TextColor or item.Color), color(item.Fill or item.Color) })
   end
-  for _, item in ipairs(graphics) do emit(item) end
+  for _, item in ipairs(graphics) do emit(item, item.Name) end
   for name, item in pairs(layout) do emit(item, name) end
 end

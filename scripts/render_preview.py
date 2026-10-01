@@ -20,6 +20,7 @@ def main():
         for row in csv.DictReader(stream, delimiter="\t"):
             pages.setdefault(row["page"], []).append(row)
     logo = Image.open(ROOT / "src" / "assets" / "shure-logo.jpeg").convert("RGB")
+    dechen_logo = Image.open(ROOT / "src" / "assets" / "dechen-logo.png").convert("RGBA")
     for page, rows in pages.items():
         canvas = Image.new("RGB", (1008, 584), "white")
         draw = ImageDraw.Draw(canvas)
@@ -33,7 +34,11 @@ def main():
             if kind == "GroupBox":
                 draw.rectangle(box, fill=fill, outline=(156, 171, 175))
             elif kind == "Image":
-                canvas.paste(logo.resize((w, h)), (x, y))
+                if row["text"] == "Dechen logo":
+                    branded = dechen_logo.resize((w, h))
+                    canvas.paste(branded, (x, y), branded)
+                else:
+                    canvas.paste(logo.resize((w, h)), (x, y))
             elif kind == "Label":
                 draw.text((x, y + (h - int(row["font"])) // 2), row["text"], font=font, fill=ink)
             elif kind == "Led":
