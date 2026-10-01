@@ -1,7 +1,7 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT",
-  Version = "0.1.1",
-  BuildVersion = "0.1.1.0",
+  Version = "0.1.2",
+  BuildVersion = "0.1.2.0",
   Id = "dch.shure.mxcwapt.control",
   Author = "DCH",
   Description = "Q-SYS plugin for Shure Microflex Complete Wireless MXCW systems with MXCWAPT central device.",

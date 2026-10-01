@@ -1,4 +1,5 @@
 local State = {}
+State.__index = State
 
 function State.new(max_mics)
   local self = {
@@ -30,7 +31,7 @@ function State.new(max_mics)
   for i = 1, 50 do
     self.voting_configs[i] = {}
   end
-  return self
+  return setmetatable(self, State)
 end
 
 function State:set_connection(status, err)

@@ -129,6 +129,7 @@ Local parser and command-matrix tests:
 ```sh
 lua test/parser_spec.lua
 lua test/layout_spec.lua
+lua test/plugin_load_spec.lua
 ```
 
 The local tests validate:
@@ -142,6 +143,11 @@ The local tests validate:
 - dB/TPCI conversion helpers
 - Dynamic microphone control counts for `1`, `16`, `20`, and `125`
 - All pages at `1`, `16`, `17`, `20`, and `125` stations: complete control coverage, no overlapping labels/controls, bounds, valid control styles, and pin modes
+- Generated plugin loading without global `package` or `require`, fresh environments for callbacks, bounded design-time execution, no network activity during runtime initialization, and simulated report/control handling
+
+The generated file starts with `PluginInfo` and uses a private module loader. It does not depend on external Lua files or alter `package.preload`. Hidden controls use `Style = "None"` without geometry, following the [Q-SYS plugin debugging example](https://help.qsys.com/DeveloperHelp/Content/Getting_Started/Building_a_Plugin.htm).
+
+Version `0.1.2` also fixes method lookup in the state and diagnostics constructors. Previously, runtime initialization failed at `state:set_connection()`. These tests use a simulated Q-SYS environment; insertion and rendering in Designer 10.4.0 still require validation in Designer. After updating, restart Designer and test the new version in a blank design before updating an existing project.
 
 ## Known Limitations
 

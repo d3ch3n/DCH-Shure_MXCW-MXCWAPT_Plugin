@@ -1,7 +1,8 @@
 local Diagnostics = {}
+Diagnostics.__index = Diagnostics
 
 function Diagnostics.new(level)
-  return { level = level or "None" }
+  return setmetatable({ level = level or "None" }, Diagnostics)
 end
 
 function Diagnostics:set_level(level)
