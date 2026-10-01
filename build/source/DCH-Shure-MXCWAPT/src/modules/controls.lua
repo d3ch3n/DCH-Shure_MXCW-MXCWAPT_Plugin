@@ -45,7 +45,7 @@ function ControlsDef.get(props)
 
   ctl(list, "IP Address", "Text", "Input")
   ctl(list, "Port", "Knob", "Input", { min = 1, max = 65535, default = 2202 })
-  ctl(list, "Connect", "Button", "Input")
+  ctl(list, "Connect", "Button", "Input", { default = true })
   ctl(list, "Refresh/Resync", "Button", "Input")
   ctl(list, "Connected", "Indicator", "Output")
   ctl(list, "Connection Status", "Text", "Output")

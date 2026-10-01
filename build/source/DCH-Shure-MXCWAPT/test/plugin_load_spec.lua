@@ -76,7 +76,7 @@ for _, callback in ipairs({ "GetProperties", "GetControls", "GetPages", "GetCont
   end)
 end
 
--- Emulation initializes handlers but must not connect or send on insertion.
+-- Without an IP, runtime enables Connect but must not open a socket.
 with_budget(function()
   local env = environment()
   assert(load(source, "@" .. path, "t", env))()
@@ -96,6 +96,7 @@ with_budget(function()
   end }
   assert(load(source, "@" .. path, "t", env))()
   assert(env.Controls["Connection Status"].String == "Disconnected")
+  assert(env.Controls["Connect"].Boolean == true)
   assert(type(env.Controls["Connect"].EventHandler) == "function")
   assert(env.Controls["RF Power"].Choices[1] == "OFF")
 

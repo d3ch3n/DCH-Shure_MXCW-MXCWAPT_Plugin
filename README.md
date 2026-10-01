@@ -61,6 +61,8 @@ Connection states are:
 - `Online`
 - `Fault`
 
+From version `0.1.7`, `Connect` is always On at runtime startup, including when the design previously saved it Off. The plugin connects automatically when an IP is configured. With an empty IP, it stays disconnected with Connect On; entering an IP starts the connection. Editing IP or port restarts an enabled connection. Turning Connect Off cancels pending retries for the current session.
+
 ## Seat Mapping
 
 The plugin does not assume that Q-SYS station index equals Shure Seat Number.
@@ -118,6 +120,7 @@ Local parser and command-matrix tests:
 lua test/parser_spec.lua
 lua test/layout_spec.lua
 lua test/plugin_load_spec.lua
+lua test/runtime_connection_spec.lua
 ```
 
 The local tests validate:
@@ -131,7 +134,8 @@ The local tests validate:
 - dB/TPCI conversion helpers
 - Dynamic microphone control counts for `1`, `16`, `20`, and `125`
 - All pages at `1`, `16`, `17`, `20`, and `125` stations: complete control coverage, no overlapping labels/controls, bounds, valid control styles, and zero pin exposure even with legacy pin properties
-- Generated plugin loading without global `package` or `require`, fresh environments for callbacks, bounded design-time execution, no network activity during runtime initialization, and simulated report/control handling
+- Generated plugin loading without global `package` or `require`, fresh environments for callbacks, bounded design-time execution, no network activity with an empty IP, and simulated report/control handling
+- Automatic connection on startup, persisted Off override, blank IP handling, address/port changes, and manual disconnect/retry cancellation
 
 The generated file starts with `PluginInfo` and uses a private module loader. It does not depend on external Lua files or alter `package.preload`. Page layouts include only controls displayed on that page, following the [Q-SYS framework example](https://help.qsys.com/DeveloperHelp/Content/Code_Examples/Basic_Plugin_Framework.htm).
 

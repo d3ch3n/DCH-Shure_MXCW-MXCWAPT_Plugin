@@ -184,11 +184,14 @@ function Runtime.install(env)
   end
 
   local function connect()
+    if ctl("Connect") and not ctl("Connect").Boolean then return end
+    if reconnect_timer then reconnect_timer:Stop() end
     if not sock then return end
     local ip = ctl("IP Address") and ctl("IP Address").String or ""
+    ip = ip:match("^%s*(.-)%s*$")
     local port = ctl("Port") and tonumber(ctl("Port").Value) or Commands.DOCUMENT.default_port
     if ip == "" then
-      update_connection("Fault", "IP Address is empty")
+      update_connection("Disconnected", "IP Address is empty")
       return
     end
     intentional_disconnect = false
@@ -198,6 +201,7 @@ function Runtime.install(env)
 
   local function disconnect()
     intentional_disconnect = true
+    if reconnect_timer then reconnect_timer:Stop() end
     if sock then sock:Disconnect() end
     update_connection("Disconnected")
   end
@@ -263,6 +267,14 @@ function Runtime.install(env)
       if control.Boolean then connect() else disconnect() end
     end
   end
+  local function restart_connection()
+    if ctl("Connect") and ctl("Connect").Boolean then
+      disconnect()
+      connect()
+    end
+  end
+  on_change("IP Address", restart_connection)
+  on_change("Port", restart_connection)
   on_button("Refresh/Resync", request_initial_state)
   on_button("APT Flash", function() send("SET", "FLASH", "ON") end)
   on_button("All Delegate Mic Off", function() send("SET", "ALL_DELEGATE_MIC_OFF", "TRUE") end)
@@ -338,6 +350,8 @@ function Runtime.install(env)
   end
 
   update_connection("Disconnected")
+  set_bool("Connect", true)
+  connect()
 end
 
 return Runtime
