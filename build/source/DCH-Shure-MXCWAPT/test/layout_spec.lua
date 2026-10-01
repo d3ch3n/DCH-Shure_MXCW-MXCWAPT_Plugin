@@ -35,19 +35,20 @@ for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
           assert(item.Style == "Button" and item.ButtonStyle == definition.ButtonType, name)
         elseif definition.Choices then assert(item.Style == "ComboBox", name)
         elseif definition.IndicatorType == "Led" then assert(item.Style == "Led", name)
-        else assert(item.Style == "Text", name) end
+        else assert(item.Style == "Text" or (item.Style == "Fader" and definition.ControlUnit == "dB"), name) end
       end
     end
     for _, graphic in ipairs(graphics) do
-      assert(graphic.Type == "Label" or graphic.Type == "GroupBox", "Invalid graphic type")
+      assert(graphic.Type == "Label" or graphic.Type == "GroupBox" or graphic.Type == "Image", "Invalid graphic type")
       if graphic.Type == "Label" then visible[#visible + 1] = { name = graphic.Text, item = graphic } end
+      if graphic.Type == "Image" then visible[#visible + 1] = { name = "Shure logo", item = graphic } end
     end
     for i, element in ipairs(visible) do
       local item = element.item
       assert(item.Position[1] >= 0 and item.Position[2] >= 0 and
         item.Position[1] + item.Size[1] <= Layout.WIDTH and
         item.Position[2] + item.Size[2] <= Layout.HEIGHT, page.name .. ": out of bounds " .. element.name)
-      assert(item.Size[2] <= 24, page.name .. ": oversized " .. element.name)
+      assert(item.Size[2] <= 24 or item.Style == "Fader" or item.Type == "Image", page.name .. ": oversized " .. element.name)
       for j = i + 1, #visible do
         assert(not overlaps(item, visible[j].item), page.name .. ": overlap " .. element.name .. " / " .. visible[j].name)
       end

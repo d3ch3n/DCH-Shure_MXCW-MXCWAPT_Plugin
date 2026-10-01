@@ -1,7 +1,15 @@
 local Properties = require("src.modules.properties")
 local ControlsDef = require("src.modules.controls")
-local Layout = { WIDTH = 700, HEIGHT = 540 }
+local Assets = require("src.modules.assets")
+local Layout = { WIDTH = 1008, HEIGHT = 584 }
+local Colors = {
+  White = { 255, 255, 255 }, Grey = { 232, 232, 232 }, Black = { 0, 0, 0 },
+  Stroke = { 156, 171, 175 }, FaderBlue = { 50, 90, 117 }, Green = { 65, 160, 94 },
+}
 local BANK_SIZE = 16
+
+local function x_pos(x) return 20 + math.floor((x - 16) * 1.44) end
+local function width(w) return math.floor(w * 1.44) end
 
 function Layout.get_pages(props)
   local pages = {}
@@ -20,9 +28,9 @@ end
 
 local function label(graphics, text, x, y, w, h, bold)
   graphics[#graphics + 1] = {
-    Type = "Label", Text = text, Position = { x, y }, Size = { w, h },
+    Type = "Label", Text = text, Position = { x_pos(x), y + 32 }, Size = { width(w), h },
     FontSize = 11, IsBold = bold == true, HTextAlign = "Left",
-    VTextAlign = "Center", StrokeWidth = 0, Color = { 40, 40, 40 },
+    VTextAlign = "Center", StrokeWidth = 0, Color = Colors.Black,
   }
 end
 
@@ -35,10 +43,18 @@ function Layout.get_layout(props)
   local index = tonumber(props and props.page_index and props.page_index.Value) or 1
   local page = pages[index] and pages[index].name or "Setup"
   graphics[#graphics + 1] = {
-    Type = "GroupBox", Position = { 0, 0 }, Size = { Layout.WIDTH, Layout.HEIGHT },
-    Fill = { 242, 244, 245 }, StrokeWidth = 0, ZOrder = -1,
+    Type = "GroupBox", Position = { 4, 4 }, Size = { Layout.WIDTH - 8, Layout.HEIGHT - 8 },
+    Fill = Colors.White, StrokeColor = Colors.Stroke, StrokeWidth = 1, ZOrder = -1,
   }
-  label(graphics, "MXCW-MXCWAPT / " .. page, 16, 10, 668, 24, true)
+  label(graphics, "DCH / Shure MXCW-MXCWAPT", 16, -20, 510, 20, true)
+  label(graphics, page, 16, 2, 510, 18)
+  graphics[#graphics + 1] = {
+    Type = "Image", Image = Assets.ShureLogo, Position = { 900, 14 }, Size = { 87, 44 },
+  }
+  graphics[#graphics + 1] = {
+    Type = "GroupBox", Position = { 9, 64 }, Size = { 990, 1 },
+    Fill = Colors.Stroke, StrokeWidth = 0,
+  }
 
   local function place(name, x, y, w, legend)
     local def = assert(definitions[name], "Unknown layout control: " .. name)
@@ -47,21 +63,30 @@ function Layout.get_layout(props)
     elseif def.Choices then style = "ComboBox"
     elseif def.IndicatorType == "Led" then style = "Led" end
     local item = {
-      PrettyName = name, Style = style, Position = { x, y }, Size = { w, 24 },
+      PrettyName = name, Style = style, Position = { x_pos(x), y + 32 }, Size = { width(w), 24 },
       FontSize = 11, HTextAlign = "Center", Margin = 0, Radius = 2,
-      IsReadOnly = def.ReadOnly, StrokeWidth = 1,
+      IsReadOnly = def.ReadOnly, StrokeWidth = 1, StrokeColor = Colors.Stroke,
+      Color = Colors.Grey, TextColor = Colors.Black,
     }
     if style == "Button" then
       item.ButtonStyle = def.ButtonType
       item.ButtonVisualStyle = "Flat"
       item.Legend = legend or name
-      item.Color = { 65, 160, 94 }
+      item.Color = Colors.FaderBlue
+      item.TextColor = Colors.White
     elseif style == "Led" then
       item.Size = { 18, 18 }
-      item.Position = { x + math.floor((w - 18) / 2), y + 3 }
-      item.Color = { 65, 160, 94 }
+      item.Position = { x_pos(x) + math.floor((width(w) - 18) / 2), y + 35 }
+      item.Color = Colors.Green
     end
     layout[name] = item
+  end
+
+  local function fader(name, x, y, w, h)
+    place(name, x, y, w)
+    local item = layout[name]
+    item.Style, item.Size[2] = "Fader", h
+    item.Color, item.ShowTextbox = Colors.FaderBlue, true
   end
 
   local function fields(names, x, y)
@@ -93,25 +118,31 @@ function Layout.get_layout(props)
   elseif page == "Microphones" then
     fields({ { "Selected Station", "Station" }, { "Selected Seat Number", "Seat number" },
       { "Selected Seat Name", "Seat name" }, { "Selected Role", "Role" },
-      { "Selected Mic Gain", "Gain (dB)" }, { "Selected Mic Priority", "Priority" } }, 16, 52)
+      { "Selected Mic Priority", "Priority" } }, 16, 52)
     fields({ { "Selected Mic Status", "Microphone active" }, { "Selected Speak Request", "Request to speak" },
       { "Selected Speak Release", "Release microphone" }, { "Selected Exclusive Mute", "Exclusive mute" },
       { "Selected Mic AGC", "AGC" }, { "Selected Flash", "Identify unit" } }, 364, 52)
+    label(graphics, "Microphone gain (dB)", 16, 224, 180, 24, true)
+    fader("Selected Mic Gain", 64, 256, 32, 180)
   elseif page == "Audio" then
-    fields({ "Loudspeaker Volume", "Aux Input Gain", "Aux Output Gain", "Audio Meter Rate" }, 16, 52)
-    fields({ "Aux Input Pad", "Aux Input AGC", "Aux Input Mute", "Aux Output Mute" }, 364, 52)
+    fields({ "Aux Input Pad", "Aux Input AGC", "Aux Input Mute", "Aux Output Mute", "Audio Meter Rate" }, 364, 52)
+    for i, name in ipairs({ "Loudspeaker Volume", "Aux Input Gain", "Aux Output Gain" }) do
+      local x = 24 + (i - 1) * 112
+      label(graphics, name, x, 52, 108, 24, true)
+      label(graphics, "dB", x, 84, 108, 20)
+      fader(name, x + 36, 116, 32, 180)
+    end
   elseif page == "Dante" then
-    local columns = {
-      { "Input gain (dB)", "Dante Input Gain", 70, 116 }, { "AGC", "Dante Input AGC", 202, 62 },
-      { "Input mute", "Dante Input Mute", 280, 96 }, { "Output gain (dB)", "Dante Output Gain", 398, 130 },
-      { "Output mute", "Dante Output Mute", 548, 120 },
-    }
-    label(graphics, "CH", 16, 48, 38, 24, true)
-    for _, col in ipairs(columns) do label(graphics, col[1], col[3], 48, col[4], 24, true) end
     for i = 1, 10 do
-      local y = 80 + (i - 1) * 28
-      label(graphics, tostring(i), 16, y, 38, 24)
-      for _, col in ipairs(columns) do place(col[2] .. " " .. i, col[3], y, col[4], col[1] == "AGC" and "AGC" or "Mute") end
+      local x = 22 + (i - 1) * 66
+      label(graphics, "CH " .. i, x, 52, 60, 24, true)
+      label(graphics, "Input / dB", x, 84, 60, 20)
+      fader("Dante Input Gain " .. i, x + 14, 112, 32, 100)
+      place("Dante Input AGC " .. i, x + 4, 224, 52, "AGC")
+      place("Dante Input Mute " .. i, x + 4, 252, 52, "Mute")
+      label(graphics, "Output / dB", x, 288, 60, 20)
+      fader("Dante Output Gain " .. i, x + 14, 316, 32, 100)
+      place("Dante Output Mute " .. i, x + 4, 428, 52, "Mute")
     end
   elseif page == "RF" then
     fields({ "RF Power", "RF Meter Rate" }, 16, 52)

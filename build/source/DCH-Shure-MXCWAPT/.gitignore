@@ -1,3 +1,4 @@
 build/*.tmp
+build/previews/
 *.log
 .DS_Store

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import re
+import base64
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -13,6 +14,7 @@ MODULES = [
     "diagnostics",
     "properties",
     "controls",
+    "assets",
     "layout",
     "runtime",
 ]
@@ -41,7 +43,11 @@ def bundle(entry: str, modules: list[str]) -> str:
     for mod in modules:
         path = SRC / "modules" / f"{mod}.lua"
         chunks.append(f"\nmodule_loaders[{module_name(mod)!r}] = function()\n")
-        chunks.append(path.read_text())
+        source = path.read_text()
+        if mod == "assets":
+            logo = base64.b64encode((SRC / "assets" / "shure-logo.jpeg").read_bytes()).decode("ascii")
+            source = source.replace("__SHURE_LOGO_BASE64__", logo)
+        chunks.append(source)
         chunks.append("\nend\n")
     chunks.append("\n")
     chunks.append(entry[header.end():])

@@ -1,7 +1,7 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT",
-  Version = "0.1.4",
-  BuildVersion = "0.1.4.0",
+  Version = "0.1.5",
+  BuildVersion = "0.1.5.0",
   ShowDebug = false,
   Id = "dch.shure.mxcwapt.control",
   Author = "DCH",
@@ -11,6 +11,14 @@ PluginInfo = {
 local PropertiesDef = require("src.modules.properties")
 local ControlsDef = require("src.modules.controls")
 local Layout = require("src.modules.layout")
+
+function GetColor(props)
+  return { 255, 255, 255 }
+end
+
+function GetPrettyName(props)
+  return "DCH - Shure MXCW-MXCWAPT, version " .. PluginInfo.Version
+end
 
 function GetProperties()
   return PropertiesDef.get()

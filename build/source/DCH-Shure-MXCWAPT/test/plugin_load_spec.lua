@@ -4,6 +4,7 @@ local source = file:read("*a")
 file:close()
 assert(source:match("^PluginInfo = %{"), "PluginInfo must be first")
 assert(not source:find("package.preload", 1, true), "Bundle must not mutate the shared module registry")
+assert(not source:find("__SHURE_LOGO_BASE64__", 1, true), "Logo asset was not embedded")
 
 local function environment()
   return {
