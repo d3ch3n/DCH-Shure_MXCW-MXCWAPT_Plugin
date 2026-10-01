@@ -49,7 +49,7 @@ function Layout.get_layout(props)
     local item = {
       PrettyName = name, Style = style, Position = { x, y }, Size = { w, 24 },
       FontSize = 11, HTextAlign = "Center", Margin = 0, Radius = 2,
-      IsReadOnly = def.PinStyle == "Output", StrokeWidth = 1,
+      IsReadOnly = def.ReadOnly, StrokeWidth = 1,
     }
     if style == "Button" then
       item.ButtonStyle = def.ButtonType

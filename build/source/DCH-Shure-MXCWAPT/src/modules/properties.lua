@@ -10,12 +10,6 @@ function Properties.get()
       Value = 16,
     },
     {
-      Name = "Control Pins",
-      Type = "enum",
-      Choices = { "None", "Microphones", "All" },
-      Value = "None",
-    },
-    {
       Name = "Debug Print",
       Type = "enum",
       Choices = { "None", "Tx", "Rx", "Tx/Rx", "All" },

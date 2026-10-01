@@ -41,6 +41,10 @@ for _, count in ipairs({ 1, 16, 17, 20, 125 }) do
     assert(env.package == nil and env.require == nil, "Bundle polluted global module state")
     local props = properties(env, count)
     local controls = env.GetControls(props)
+    assert(#env.GetPins(props) == 0 and env.PluginInfo.ShowDebug == false)
+    props.plugin_show_debug = { Value = true }
+    env.RectifyProperties(props)
+    assert(not props.plugin_show_debug.Value and props.plugin_show_debug.IsHidden)
     local pages = env.GetPages(props)
     local seen = {}
     assert(#controls > 0 and #pages > 0)
@@ -51,6 +55,7 @@ for _, count in ipairs({ 1, 16, 17, 20, 125 }) do
         local item = layout[control.Name]
         if item then seen[control.Name] = true end
         assert(not control.UserPin, "Pins must be disabled by default")
+        assert(control.PinStyle == "None" and control.ReadOnly == nil, "Native control exposes pins or private metadata")
         assert(control.Choices == nil, "Choices is not a native GetControls property")
         assert(not item or item.Style ~= "None", "Do not repeat hidden controls on every page")
       end

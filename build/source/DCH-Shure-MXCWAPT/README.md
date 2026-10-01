@@ -36,17 +36,11 @@ The parser supports fragmented TCP reads, multiple messages in one packet, async
   - Min: `1`
   - Max: `125`
   - Default: `16`
-  - Dynamically controls how many per-station controls and pins are created.
+  - Dynamically controls how many per-station UI controls are created.
 
 - `Debug Print`
   - Choices: `None`, `Tx`, `Rx`, `Tx/Rx`, `All`
   - Prints formatted TX/RX traffic and diagnostics according to the selected level.
-
-- `Control Pins`
-  - Choices: `None`, `Microphones`, `All`
-  - Default: `None`; no pins are exposed.
-  - `Microphones` enables only per-station active and online pins.
-  - `All` enables the integration pins listed below.
 
 ## Connection Controls
 
@@ -88,19 +82,11 @@ Each station has a `Seat Number N` control. Reports from the MXCWAPT are mapped 
 
 The Microphones page uses a selected-station workflow for detailed controls. Station and battery tables show up to 16 units per page. All pages use a 700 x 540 pixel canvas with compact 24-pixel fields. Each page returns only its visible controls, and every control is assigned to at least one page.
 
-## Pins and Control Groups
+## Control Pins
 
-Pins are disabled by default. With `Control Pins` set to `All`, the plugin offers connection status, global controls, conference controls, per-station mic active state, per-station online state, request/speak-list states, battery data, seat names, and voting states.
+Version `0.1.4` removes all control-pin exposure: every control has `UserPin = false` and `PinStyle = "None"`, `GetPins()` is empty, and the option to enable pins is removed. The plugin and diagnostics keep their on-screen controls. Debug pins are disabled through `ShowDebug = false`; the main plugin and Page Probe also clear and hide `plugin_show_debug` in `RectifyProperties()`.
 
-Important per-station pins include:
-
-- `Seat Number N`
-- `Mic Active N`
-- `Mic Online N`
-- `Mic Name N`
-- `Request List N`
-- `Speak List N`
-- `Battery Charge N`
+Replace or reinsert an existing component after reloading the updated plugin if the design retains previously exposed pins. Save the project before replacing components.
 
 ## Building
 
@@ -143,7 +129,7 @@ The local tests validate:
 - Nested index parsing for voting button names
 - dB/TPCI conversion helpers
 - Dynamic microphone control counts for `1`, `16`, `20`, and `125`
-- All pages at `1`, `16`, `17`, `20`, and `125` stations: complete control coverage, no overlapping labels/controls, bounds, valid control styles, and pin modes
+- All pages at `1`, `16`, `17`, `20`, and `125` stations: complete control coverage, no overlapping labels/controls, bounds, valid control styles, and zero pin exposure even with legacy pin properties
 - Generated plugin loading without global `package` or `require`, fresh environments for callbacks, bounded design-time execution, no network activity during runtime initialization, and simulated report/control handling
 
 The generated file starts with `PluginInfo` and uses a private module loader. It does not depend on external Lua files or alter `package.preload`. Page layouts include only controls displayed on that page, following the [Q-SYS framework example](https://help.qsys.com/DeveloperHelp/Content/Code_Examples/Basic_Plugin_Framework.htm).

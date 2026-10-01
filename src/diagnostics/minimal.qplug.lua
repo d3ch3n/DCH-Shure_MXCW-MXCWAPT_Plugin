@@ -2,6 +2,7 @@ PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT Diagnostics~01 Minimal",
   Version = "0.1.3",
   BuildVersion = "0.1.3.0",
+  ShowDebug = false,
   Id = "41d6c23e-d3fb-4b51-a463-b175bd1c74ed",
   Author = "DCH",
   Description = "MXCW Designer insertion diagnostic: two controls, one page, no runtime.",
@@ -19,10 +20,14 @@ function GetProperties()
   return {}
 end
 
+function GetPins(props)
+  return {}
+end
+
 function GetControls(props)
   return {
-    { Name = "Address", ControlType = "Text", Count = 1, UserPin = false },
-    { Name = "Enable", ControlType = "Button", ButtonType = "Toggle", Count = 1, UserPin = false },
+    { Name = "Address", ControlType = "Text", Count = 1, UserPin = false, PinStyle = "None" },
+    { Name = "Enable", ControlType = "Button", ButtonType = "Toggle", Count = 1, UserPin = false, PinStyle = "None" },
   }
 end
 

@@ -1,7 +1,8 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT Diagnostics~03 Page Probe",
-  Version = "0.1.0",
-  BuildVersion = "0.1.0.0",
+  Version = "0.1.1",
+  BuildVersion = "0.1.1.0",
+  ShowDebug = false,
   Id = "41d6c23e-d3fb-4b51-a463-b175bd1c74ef",
   Author = "DCH",
   Description = "Single-page MXCW UI probe; no runtime, TCP, timers or exposed pins.",
@@ -10,6 +11,18 @@ PluginInfo = {
 local PropertiesDef = require("src.modules.properties")
 local ControlsDef = require("src.modules.controls")
 local Layout = require("src.modules.layout")
+
+function GetPins(props)
+  return {}
+end
+
+function RectifyProperties(props)
+  if props.plugin_show_debug then
+    props.plugin_show_debug.Value = false
+    props.plugin_show_debug.IsHidden = true
+  end
+  return props
+end
 
 function GetPrettyName(props)
   return "MXCW Diagnostic - Page Probe"
@@ -29,7 +42,6 @@ local function selected_layout(props)
   local target = props and props["Diagnostic Page"] and props["Diagnostic Page"].Value or "Setup"
   local selected = {}
   for name, value in pairs(props or {}) do selected[name] = value end
-  selected["Control Pins"] = { Value = "None" }
   selected.page_index = { Value = 1 }
   for index, page in ipairs(Layout.get_pages(selected)) do
     if page.name == target or page.name:match("^(%a+) ") == target then

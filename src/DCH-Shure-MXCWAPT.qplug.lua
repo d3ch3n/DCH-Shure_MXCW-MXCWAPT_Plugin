@@ -1,7 +1,8 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT",
-  Version = "0.1.3",
-  BuildVersion = "0.1.3.0",
+  Version = "0.1.4",
+  BuildVersion = "0.1.4.0",
+  ShowDebug = false,
   Id = "dch.shure.mxcwapt.control",
   Author = "DCH",
   Description = "Q-SYS plugin for Shure Microflex Complete Wireless MXCW systems with MXCWAPT central device.",
@@ -13,6 +14,18 @@ local Layout = require("src.modules.layout")
 
 function GetProperties()
   return PropertiesDef.get()
+end
+
+function GetPins(props)
+  return {}
+end
+
+function RectifyProperties(props)
+  if props.plugin_show_debug then
+    props.plugin_show_debug.Value = false
+    props.plugin_show_debug.IsHidden = true
+  end
+  return props
 end
 
 function GetControls(props)

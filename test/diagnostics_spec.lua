@@ -14,7 +14,8 @@ for _, path in ipairs({ "build/diagnostics/DCH-MXCW-01-Minimal.qplug", "build/di
     local layout, graphics = env.GetControlLayout(props)
     assert(type(layout) == "table" and type(graphics) == "table")
   end
-  for _, control in ipairs(controls) do assert(not control.UserPin) end
+  assert(#env.GetPins(props) == 0)
+  for _, control in ipairs(controls) do assert(control.UserPin == false and control.PinStyle == "None") end
   assert(env.PluginInfo.Id ~= "dch.shure.mxcwapt.control")
 end
 print("diagnostics_spec.lua: ok (minimal and full UI, no sockets/timers)")
@@ -47,7 +48,7 @@ for _, n in ipairs({ 1, 16, 125 }) do
         for _ in pairs(layout) do count = count + 1 end
         assert(count == #controls, page .. ": layout/control mismatch")
         for _, control in ipairs(controls) do
-          assert(not control.UserPin and layout[control.Name])
+          assert(control.UserPin == false and control.PinStyle == "None" and layout[control.Name])
         end
         if appearance == "Plain" then assert(#graphics == 0) end
       end

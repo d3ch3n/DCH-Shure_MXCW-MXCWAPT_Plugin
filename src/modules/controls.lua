@@ -9,8 +9,9 @@ local function ctl(list, name, control_type, direction, opts)
   local item = {
     Name = name,
     ControlType = qsys_control_type,
-    UserPin = opts.pin == true,
-    PinStyle = direction,
+    UserPin = false,
+    PinStyle = "None",
+    ReadOnly = direction == "Output",
     Count = 1,
   }
   if opts.count then item.Count = opts.count end
@@ -46,20 +47,20 @@ function ControlsDef.get(props)
   ctl(list, "Port", "Knob", "Input", { min = 1, max = 65535, default = 2202 })
   ctl(list, "Connect", "Button", "Input")
   ctl(list, "Refresh/Resync", "Button", "Input")
-  ctl(list, "Connected", "Indicator", "Output", { pin = true })
-  ctl(list, "Connection Status", "Text", "Output", { pin = true })
-  ctl(list, "Last Error", "Text", "Output", { pin = true })
-  ctl(list, "Synchronized", "Indicator", "Output", { pin = true })
+  ctl(list, "Connected", "Indicator", "Output")
+  ctl(list, "Connection Status", "Text", "Output")
+  ctl(list, "Last Error", "Text", "Output")
+  ctl(list, "Synchronized", "Indicator", "Output")
 
   ctl(list, "Device ID", "Text", "Input")
   ctl(list, "Model", "Text", "Output")
   ctl(list, "APT Flash", "Button", "Input")
   ctl(list, "RF Power", "ComboBox", "Input", { choices = { "OFF", "LOW", "MEDIUM", "HIGH", "MAXIMUM" } })
-  ctl(list, "Global Mute", "Button", "Input", { pin = true })
-  ctl(list, "Audio Input Speaklist", "Button", "Input", { pin = true })
-  ctl(list, "All Delegate Mic Off", "Button", "Input", { pin = true })
-  ctl(list, "Clear Request List", "Button", "Input", { pin = true })
-  ctl(list, "Next Mic On", "Button", "Input", { pin = true })
+  ctl(list, "Global Mute", "Button", "Input")
+  ctl(list, "Audio Input Speaklist", "Button", "Input")
+  ctl(list, "All Delegate Mic Off", "Button", "Input")
+  ctl(list, "Clear Request List", "Button", "Input")
+  ctl(list, "Next Mic On", "Button", "Input")
   ctl(list, "WDU Off", "Button", "Input")
   ctl(list, "Welcome Lock Reset", "Button", "Input")
   ctl(list, "Retain Seat Persistence", "Button", "Input")
@@ -103,14 +104,14 @@ function ControlsDef.get(props)
   ctl(list, "Selected Flash", "Button", "Input")
 
   for i = 1, n do
-    ctl(list, "Seat Number " .. i, "Knob", "Input", { min = 1, max = 65535, default = i, pin = true })
-    ctl(list, "Mic Active " .. i, "Button", "Input", { pin = true })
-    ctl(list, "Mic Online " .. i, "Indicator", "Output", { pin = true })
-    ctl(list, "Mic Name " .. i, "Text", "Output", { pin = true })
+    ctl(list, "Seat Number " .. i, "Knob", "Input", { min = 1, max = 65535, default = i })
+    ctl(list, "Mic Active " .. i, "Button", "Input")
+    ctl(list, "Mic Online " .. i, "Indicator", "Output")
+    ctl(list, "Mic Name " .. i, "Text", "Output")
     ctl(list, "Mic Role " .. i, "Text", "Output")
-    ctl(list, "Request List " .. i, "Indicator", "Output", { pin = true })
-    ctl(list, "Speak List " .. i, "Indicator", "Output", { pin = true })
-    ctl(list, "Battery Charge " .. i, "Meter", "Output", { pin = true })
+    ctl(list, "Request List " .. i, "Indicator", "Output")
+    ctl(list, "Speak List " .. i, "Indicator", "Output")
+    ctl(list, "Battery Charge " .. i, "Meter", "Output")
     ctl(list, "Battery Runtime " .. i, "Text", "Output")
     ctl(list, "Battery Health " .. i, "Meter", "Output")
     ctl(list, "Battery Cycle " .. i, "Text", "Output")
@@ -125,7 +126,7 @@ function ControlsDef.get(props)
   ctl(list, "Cancel Vote", "Button", "Input")
   ctl(list, "Share Voting Results", "Button", "Input")
   ctl(list, "Close Voting Results", "Button", "Input")
-  ctl(list, "Voting State", "Text", "Output", { pin = true })
+  ctl(list, "Voting State", "Text", "Output")
   ctl(list, "Voting Configuration", "Text", "Output")
   for i = 1, 5 do
     ctl(list, "Voting Button Name " .. i, "Text", "Output")
@@ -133,17 +134,15 @@ function ControlsDef.get(props)
     ctl(list, "Final Voting Result " .. i, "Text", "Output")
   end
 
-  local pin_mode = props and props["Control Pins"] and props["Control Pins"].Value or "None"
-  for _, item in ipairs(list) do
-    local microphone_pin = item.Name:match("^Mic Active %d+$") or item.Name:match("^Mic Online %d+$")
-    item.UserPin = item.UserPin and (pin_mode == "All" or (pin_mode == "Microphones" and microphone_pin ~= nil))
-  end
   return list
 end
 
 function ControlsDef.native(props)
   local list = ControlsDef.get(props)
-  for _, control in ipairs(list) do control.Choices = nil end
+  for _, control in ipairs(list) do
+    control.Choices = nil
+    control.ReadOnly = nil
+  end
   return list
 end
 

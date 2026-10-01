@@ -56,17 +56,10 @@ for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
   for name in pairs(definitions) do assert(seen[name], "Control never displayed: " .. name) end
   for _, mode in ipairs({ "Microphones", "All" }) do
     props["Control Pins"] = { Value = mode }
-    local count = 0
     for _, control in ipairs(Controls.get(props)) do
-      if control.UserPin then
-        count = count + 1
-        if mode == "Microphones" then
-          assert(control.Name:match("^Mic Active %d+$") or control.Name:match("^Mic Online %d+$"), control.Name)
-        end
-      end
+      assert(control.UserPin == false and control.PinStyle == "None", "Legacy property exposed pin: " .. control.Name)
     end
-    assert(count == (mode == "Microphones" and 2 * n or 10 + 7 * n), "Unexpected pin count for " .. mode)
   end
 end
 
-print("layout_spec.lua: ok (all pages, 1/16/17/20/125 stations, geometry, coverage, pin modes)")
+print("layout_spec.lua: ok (all pages, 1/16/17/20/125 stations, geometry, coverage, no pins)")
