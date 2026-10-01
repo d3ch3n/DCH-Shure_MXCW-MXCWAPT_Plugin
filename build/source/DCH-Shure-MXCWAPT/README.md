@@ -1,0 +1,146 @@
+# DCH Shure MXCW / MXCWAPT Q-SYS Plugin
+
+Q-SYS Designer plugin for Shure Microflex Complete Wireless MXCW systems, using the MXCWAPT access point as the central control endpoint.
+
+The plugin communicates directly with the MXCWAPT over the official Shure command string TCP interface.
+
+Q-SYS Designer plugin name: `DCH~Shure~MXCW-MXCWAPT`, shown under `DCH > Shure > MXCW-MXCWAPT`.
+
+## Supported Equipment
+
+- Shure MXCWAPT Microflex Complete Wireless Access Point
+- Shure MXCW640 conference units and MXCW seats exposed through the MXCWAPT command strings
+
+## Shure Documentation Used
+
+- Document: MXCWAPT Microflex Complete Wireless Command Strings
+- Official URL: https://www.shure.com/en-US/docs/commandstrings/MXCW
+- Shure document ID: `6944`
+- Publication ID: `p_31597010-4d03-4506-ab58-811c4f5cda42`
+- Publication version: `8.2`
+- Publication date code: `2025-F`
+
+## Protocol
+
+- Transport: TCP/IP client connection from Q-SYS to the MXCWAPT
+- Default port: `2202`
+- Encoding: ASCII command strings
+- Framing: angle-bracketed messages, for example `< GET MODEL >`
+
+The parser supports fragmented TCP reads, multiple messages in one packet, asynchronous `REP` messages, `REP ERR`, unknown commands, and braced string payloads such as `{Ana Maria}`.
+
+## Properties
+
+- `Number of Microphones`
+  - Type: integer
+  - Min: `1`
+  - Max: `125`
+  - Default: `16`
+  - Dynamically controls how many per-station controls and pins are created.
+
+- `Debug Print`
+  - Choices: `None`, `Tx`, `Rx`, `Tx/Rx`, `All`
+  - Prints formatted TX/RX traffic and diagnostics according to the selected level.
+
+## Connection Controls
+
+- `IP Address`
+- `Port`
+- `Connect`
+- `Connected`
+- `Connection Status`
+- `Last Error`
+- `Refresh/Resync`
+- `Synchronized`
+
+Connection states are:
+
+- `Disconnected`
+- `Connecting`
+- `Connected / Synchronizing`
+- `Online`
+- `Fault`
+
+## Seat Mapping
+
+The plugin does not assume that Q-SYS station index equals Shure Seat Number.
+
+Each station has a `Seat Number N` control. Reports from the MXCWAPT are mapped back from real Seat Number to configured Q-SYS station index. This allows non-sequential seat numbering.
+
+## Pages
+
+- `Setup`
+- `System`
+- `Conference`
+- `Microphones`
+- `Audio`
+- `RF`
+- `Battery`
+- `Voting`
+- `Diagnostics`
+
+The Microphones page uses a selected-station workflow for detailed controls while still exposing per-station states as pins.
+
+## Pins and Control Groups
+
+The plugin exposes connection status, global controls, conference controls, per-station mic active state, per-station online state, request/speak-list states, battery data, seat names, and voting states.
+
+Important per-station pins include:
+
+- `Seat Number N`
+- `Mic Active N`
+- `Mic Online N`
+- `Mic Name N`
+- `Request List N`
+- `Speak List N`
+- `Battery Charge N`
+
+## Building
+
+Generate the installable `.qplug`:
+
+```sh
+python3 scripts/build_qplug.py
+```
+
+Output:
+
+```text
+build/DCH-Shure-MXCWAPT.qplug
+```
+
+## Installation
+
+Copy the generated `.qplug` into the Q-SYS Designer `Plugins/DCH/Shure/MXCW-MXCWAPT/` folder and restart Designer to reload plugins.
+
+A copy of the sources, build script, tests, and documentation is saved in `build/source/DCH-Shure-MXCWAPT/`.
+
+## Validation
+
+Local parser and command-matrix tests:
+
+```sh
+lua test/parser_spec.lua
+```
+
+The local tests validate:
+
+- 64 official commands represented in the command matrix
+- Default port `2202`
+- Fragmented TCP messages
+- Multiple messages in one TCP read
+- Braced string parsing
+- Nested index parsing for voting button names
+- dB/TPCI conversion helpers
+- Dynamic microphone control counts for `1`, `16`, `20`, and `125`
+
+## Known Limitations
+
+- Hardware validation requires a physical MXCWAPT and registered MXCW conference units.
+- Q-SYS Designer API compatibility should be verified in the target Designer version before production deployment.
+- The plugin does not simulate web-interface-only features that are not present in the official Command Strings document.
+- Meter `SAMPLE` reports are parsed and logged, but detailed audio/RF sample visualization is intentionally minimal in this first release.
+
+## API Coverage
+
+See [MXCW_COMMAND_IMPLEMENTATION.md](MXCW_COMMAND_IMPLEMENTATION.md) for the complete command-by-command implementation matrix.
