@@ -42,6 +42,12 @@ The parser supports fragmented TCP reads, multiple messages in one packet, async
   - Choices: `None`, `Tx`, `Rx`, `Tx/Rx`, `All`
   - Prints formatted TX/RX traffic and diagnostics according to the selected level.
 
+- `Control Pins`
+  - Choices: `None`, `Microphones`, `All`
+  - Default: `None`; no pins are exposed.
+  - `Microphones` enables only per-station active and online pins.
+  - `All` enables the integration pins listed below.
+
 ## Connection Controls
 
 - `IP Address`
@@ -74,16 +80,17 @@ Each station has a `Seat Number N` control. Reports from the MXCWAPT are mapped 
 - `Conference`
 - `Microphones`
 - `Audio`
+- `Dante`
 - `RF`
-- `Battery`
+- `Stations 1-16` and `Battery 1-16` (additional groups of up to 16 as needed)
 - `Voting`
 - `Diagnostics`
 
-The Microphones page uses a selected-station workflow for detailed controls while still exposing per-station states as pins.
+The Microphones page uses a selected-station workflow for detailed controls. Station and battery tables show up to 16 units per page. All pages use a 700 x 540 pixel canvas with compact 24-pixel fields. Controls belonging to other pages are explicitly hidden to prevent orphan elements.
 
 ## Pins and Control Groups
 
-The plugin exposes connection status, global controls, conference controls, per-station mic active state, per-station online state, request/speak-list states, battery data, seat names, and voting states.
+Pins are disabled by default. With `Control Pins` set to `All`, the plugin offers connection status, global controls, conference controls, per-station mic active state, per-station online state, request/speak-list states, battery data, seat names, and voting states.
 
 Important per-station pins include:
 
@@ -121,6 +128,7 @@ Local parser and command-matrix tests:
 
 ```sh
 lua test/parser_spec.lua
+lua test/layout_spec.lua
 ```
 
 The local tests validate:
@@ -133,6 +141,7 @@ The local tests validate:
 - Nested index parsing for voting button names
 - dB/TPCI conversion helpers
 - Dynamic microphone control counts for `1`, `16`, `20`, and `125`
+- All pages at `1`, `16`, `17`, `20`, and `125` stations: complete control coverage, no overlapping labels/controls, bounds, valid control styles, and pin modes
 
 ## Known Limitations
 

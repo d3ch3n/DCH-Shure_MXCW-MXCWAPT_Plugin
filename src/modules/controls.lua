@@ -4,7 +4,8 @@ local ControlsDef = {}
 
 local function ctl(list, name, control_type, direction, opts)
   opts = opts or {}
-  local qsys_control_type = control_type == "ComboBox" and "Text" or control_type
+  local qsys_control_type = control_type == "ComboBox" and "Text" or
+    (control_type == "Meter" and "Indicator" or control_type)
   local item = {
     Name = name,
     ControlType = qsys_control_type,
@@ -16,6 +17,14 @@ local function ctl(list, name, control_type, direction, opts)
   if opts.max then item.Max = opts.max end
   if opts.choices then item.Choices = opts.choices end
   if opts.default ~= nil then item.DefaultValue = opts.default end
+  if qsys_control_type == "Indicator" then
+    item.IndicatorType = control_type == "Meter" and "Meter" or "Led"
+    if control_type == "Meter" then item.Min, item.Max = 0, 100 end
+  end
+  if qsys_control_type == "Knob" then
+    item.ControlUnit = (name:find("Gain") or name:find("Volume")) and "dB" or "Integer"
+    if item.Min == item.Max then item.Max = item.Min + 1 end
+  end
   if qsys_control_type == "Button" then
     local momentary = name:find("Refresh") or name:find("Flash") or name:find("Off") or
       name:find("Reset") or name:find("Request") or name:find("Release") or
@@ -121,6 +130,11 @@ function ControlsDef.get(props)
     ctl(list, "Final Voting Result " .. i, "Text", "Output")
   end
 
+  local pin_mode = props and props["Control Pins"] and props["Control Pins"].Value or "None"
+  for _, item in ipairs(list) do
+    local microphone_pin = item.Name:match("^Mic Active %d+$") or item.Name:match("^Mic Online %d+$")
+    item.UserPin = item.UserPin and (pin_mode == "All" or (pin_mode == "Microphones" and microphone_pin ~= nil))
+  end
   return list
 end
 
