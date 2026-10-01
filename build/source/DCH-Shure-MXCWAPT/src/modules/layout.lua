@@ -163,9 +163,10 @@ function Layout.get_layout(props)
       fader("Dante Input Gain " .. i, x + 14, 112, 32, 100)
       place("Dante Input AGC " .. i, x + 4, 224, 52, "AGC")
       place("Dante Input Mute " .. i, x + 4, 252, 52, "Mute")
-      label(graphics, "Output / dB", x, 288, 60, 20)
-      fader("Dante Output Gain " .. i, x + 14, 316, 32, 100)
-      place("Dante Output Mute " .. i, x + 4, 428, 52, "Mute")
+      label(graphics, "CH " .. i, x, 288, 60, 24, true)
+      label(graphics, "Output / dB", x, 320, 60, 20)
+      fader("Dante Output Gain " .. i, x + 14, 348, 32, 100)
+      place("Dante Output Mute " .. i, x + 4, 460, 52, "Mute")
     end
   elseif page == "RF" then
     fields({ "RF Power", "RF Meter Rate" }, 16, 52)

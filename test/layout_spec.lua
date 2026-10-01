@@ -26,6 +26,17 @@ for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
   for index, page in ipairs(Layout.get_pages(props)) do
     props.page_index = { Value = index }
     local layout, graphics = Layout.get_layout(props)
+    if page.name == "Dante" then
+      for channel = 1, 10 do
+        local row_labels = 0
+        for _, graphic in ipairs(graphics) do
+          if graphic.Type == "Label" and graphic.Text == "CH " .. channel then
+            row_labels = row_labels + 1
+          end
+        end
+        assert(row_labels == 2, "Dante channel must be identified in both rows: " .. channel)
+      end
+    end
     local visible = {}
     for name, definition in pairs(definitions) do
       local item = layout[name]
