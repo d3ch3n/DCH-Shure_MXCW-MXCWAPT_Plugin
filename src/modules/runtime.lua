@@ -25,6 +25,12 @@ function Runtime.install(env)
     return Controls and Controls[name]
   end
 
+  for _, definition in ipairs(env.ControlDefinitions or {}) do
+    if definition.Choices and ctl(definition.Name) then
+      ctl(definition.Name).Choices = definition.Choices
+    end
+  end
+
   local function set_string(name, value)
     local c = ctl(name)
     if c then c.String = tostring(value or "") end

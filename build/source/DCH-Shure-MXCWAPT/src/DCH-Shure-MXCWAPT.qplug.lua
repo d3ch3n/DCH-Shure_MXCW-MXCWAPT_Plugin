@@ -1,7 +1,7 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT",
-  Version = "0.1.2",
-  BuildVersion = "0.1.2.0",
+  Version = "0.1.3",
+  BuildVersion = "0.1.3.0",
   Id = "dch.shure.mxcwapt.control",
   Author = "DCH",
   Description = "Q-SYS plugin for Shure Microflex Complete Wireless MXCW systems with MXCWAPT central device.",
@@ -16,7 +16,7 @@ function GetProperties()
 end
 
 function GetControls(props)
-  return ControlsDef.get(props)
+  return ControlsDef.native(props)
 end
 
 function GetPages(props)
@@ -36,6 +36,7 @@ if Controls then
 
   Runtime.install({
     Controls = Controls,
+    ControlDefinitions = ControlsDef.get(Properties),
     TcpSocket = TcpSocket,
     Timer = Timer,
     PluginProperties = Properties,

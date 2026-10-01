@@ -28,10 +28,8 @@ end
 
 function Layout.get_layout(props)
   local layout, graphics, definitions = {}, {}, {}
-  -- Absent controls need explicit hidden layouts to prevent automatic placement.
   for _, control in ipairs(ControlsDef.get(props)) do
     definitions[control.Name] = control
-    layout[control.Name] = { Style = "None", PrettyName = control.Name }
   end
   local pages = Layout.get_pages(props)
   local index = tonumber(props and props.page_index and props.page_index.Value) or 1

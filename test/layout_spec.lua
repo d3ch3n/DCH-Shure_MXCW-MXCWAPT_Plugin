@@ -27,8 +27,8 @@ for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
     local layout, graphics = Layout.get_layout(props)
     local visible = {}
     for name, definition in pairs(definitions) do
-      local item = assert(layout[name], page.name .. ": orphan " .. name)
-      if item.Style ~= "None" then
+      local item = layout[name]
+      if item and item.Style ~= "None" then
         seen[name] = true
         visible[#visible + 1] = { name = name, item = item }
         if definition.ControlType == "Button" then

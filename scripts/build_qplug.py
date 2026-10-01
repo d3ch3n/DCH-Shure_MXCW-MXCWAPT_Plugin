@@ -22,8 +22,7 @@ def module_name(name: str) -> str:
     return f"src.modules.{name}"
 
 
-def main() -> None:
-    entry = (SRC / "DCH-Shure-MXCWAPT.qplug.lua").read_text()
+def bundle(entry: str, modules: list[str]) -> str:
     header = re.match(r"\APluginInfo = \{.*?\n\}\n", entry, re.DOTALL)
     if header is None:
         raise ValueError("Plugin entry must start with PluginInfo")
@@ -39,16 +38,36 @@ def main() -> None:
         "  return value\n",
         "end\n",
     ]
-    for mod in MODULES:
+    for mod in modules:
         path = SRC / "modules" / f"{mod}.lua"
         chunks.append(f"\nmodule_loaders[{module_name(mod)!r}] = function()\n")
         chunks.append(path.read_text())
         chunks.append("\nend\n")
     chunks.append("\n")
     chunks.append(entry[header.end():])
+    return "".join(chunks)
+
+
+def main() -> None:
+    entry = (SRC / "DCH-Shure-MXCWAPT.qplug.lua").read_text()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text("".join(chunks))
+    OUT.write_text(bundle(entry, MODULES))
     print(OUT)
+    diagnostics = OUT.parent / "diagnostics"
+    diagnostics.mkdir(parents=True, exist_ok=True)
+    minimal = diagnostics / "DCH-MXCW-01-Minimal.qplug"
+    minimal.write_text((SRC / "diagnostics" / "minimal.qplug.lua").read_text())
+    ui_entry, separator, _ = entry.partition("\nif Controls then\n")
+    if not separator:
+        raise ValueError("Cannot isolate design-time entry")
+    ui_entry = ui_entry.replace('Name = "DCH~Shure~MXCW-MXCWAPT"',
+                                'Name = "DCH~Shure~MXCW-MXCWAPT Diagnostics~02 UI Only"')
+    ui_entry = ui_entry.replace('Id = "dch.shure.mxcwapt.control"',
+                                'Id = "41d6c23e-d3fb-4b51-a463-b175bd1c74ee"')
+    ui_only = diagnostics / "DCH-MXCW-02-UI-Only.qplug"
+    ui_only.write_text(bundle(ui_entry, ["properties", "controls", "layout"]))
+    print(minimal)
+    print(ui_only)
 
 
 if __name__ == "__main__":

@@ -86,7 +86,7 @@ Each station has a `Seat Number N` control. Reports from the MXCWAPT are mapped 
 - `Voting`
 - `Diagnostics`
 
-The Microphones page uses a selected-station workflow for detailed controls. Station and battery tables show up to 16 units per page. All pages use a 700 x 540 pixel canvas with compact 24-pixel fields. Controls belonging to other pages are explicitly hidden to prevent orphan elements.
+The Microphones page uses a selected-station workflow for detailed controls. Station and battery tables show up to 16 units per page. All pages use a 700 x 540 pixel canvas with compact 24-pixel fields. Each page returns only its visible controls, and every control is assigned to at least one page.
 
 ## Pins and Control Groups
 
@@ -130,6 +130,7 @@ Local parser and command-matrix tests:
 lua test/parser_spec.lua
 lua test/layout_spec.lua
 lua test/plugin_load_spec.lua
+lua test/diagnostics_spec.lua
 ```
 
 The local tests validate:
@@ -145,9 +146,20 @@ The local tests validate:
 - All pages at `1`, `16`, `17`, `20`, and `125` stations: complete control coverage, no overlapping labels/controls, bounds, valid control styles, and pin modes
 - Generated plugin loading without global `package` or `require`, fresh environments for callbacks, bounded design-time execution, no network activity during runtime initialization, and simulated report/control handling
 
-The generated file starts with `PluginInfo` and uses a private module loader. It does not depend on external Lua files or alter `package.preload`. Hidden controls use `Style = "None"` without geometry, following the [Q-SYS plugin debugging example](https://help.qsys.com/DeveloperHelp/Content/Getting_Started/Building_a_Plugin.htm).
+The generated file starts with `PluginInfo` and uses a private module loader. It does not depend on external Lua files or alter `package.preload`. Page layouts include only controls displayed on that page, following the [Q-SYS framework example](https://help.qsys.com/DeveloperHelp/Content/Code_Examples/Basic_Plugin_Framework.htm).
 
 Version `0.1.2` also fixes method lookup in the state and diagnostics constructors. Previously, runtime initialization failed at `state:set_connection()`. These tests use a simulated Q-SYS environment; insertion and rendering in Designer 10.4.0 still require validation in Designer. After updating, restart Designer and test the new version in a blank design before updating an existing project.
+
+## Designer Freeze Diagnostics
+
+The Designer 10.4.0 freeze persisted with `0.1.2`; its cause has not yet been confirmed. Version `0.1.3` removes repeated hidden layouts, defines battery percentages as numeric controls, exports only native control properties, and initializes combo choices in runtime.
+
+The build also creates two separate diagnostic plugins in `build/diagnostics/` with distinct IDs and names:
+
+1. `DCH-MXCW-01-Minimal.qplug`: two controls, a single default page, no modules, no runtime.
+2. `DCH-MXCW-02-UI-Only.qplug`: the complete UI and properties, without protocol, sockets, timers, or runtime code.
+
+Test the minimal plugin first in a blank design, then the UI-only plugin, then the full plugin. Record which step freezes. If the minimal plugin freezes, the complete MXCW UI/runtime is not needed to trigger it. If only the UI-only version freezes, investigate native control/layout conversion. If both diagnostics load and only the full version freezes, investigate the runtime/loading path. These diagnostics do not operate the Shure equipment and should not replace the production plugin.
 
 ## Known Limitations
 

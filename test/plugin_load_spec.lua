@@ -42,18 +42,20 @@ for _, count in ipairs({ 1, 16, 17, 20, 125 }) do
     local props = properties(env, count)
     local controls = env.GetControls(props)
     local pages = env.GetPages(props)
+    local seen = {}
     assert(#controls > 0 and #pages > 0)
     for index in ipairs(pages) do
       props.page_index = { Value = index }
       local layout = env.GetControlLayout(props)
       for _, control in ipairs(controls) do
-        local item = assert(layout[control.Name], "Missing layout: " .. control.Name)
+        local item = layout[control.Name]
+        if item then seen[control.Name] = true end
         assert(not control.UserPin, "Pins must be disabled by default")
-        if item.Style == "None" then
-          assert(item.Position == nil and item.Size == nil, "Hidden control creates geometry")
-        end
+        assert(control.Choices == nil, "Choices is not a native GetControls property")
+        assert(not item or item.Style ~= "None", "Do not repeat hidden controls on every page")
       end
     end
+    for _, control in ipairs(controls) do assert(seen[control.Name], "Orphan control: " .. control.Name) end
   end)
 end
 
@@ -88,6 +90,7 @@ with_budget(function()
   assert(load(source, "@" .. path, "t", env))()
   assert(env.Controls["Connection Status"].String == "Disconnected")
   assert(type(env.Controls["Connect"].EventHandler) == "function")
+  assert(env.Controls["RF Power"].Choices[1] == "OFF")
 
   local socket = { BufferLength = 0 }
   socket.Read = function() return "< REP GLOBAL_MUTE ON >< REP 1 UNIT_AVAILABLE AVAILABLE >" end
