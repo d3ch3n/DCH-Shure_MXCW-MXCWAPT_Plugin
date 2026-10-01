@@ -158,8 +158,11 @@ The build also creates two separate diagnostic plugins in `build/diagnostics/` w
 
 1. `DCH-MXCW-01-Minimal.qplug`: two controls, a single default page, no modules, no runtime.
 2. `DCH-MXCW-02-UI-Only.qplug`: the complete UI and properties, without protocol, sockets, timers, or runtime code.
+3. `DCH-MXCW-03-Page-Probe.qplug`: one default page and only its controls (eight Setup controls on insertion). `Diagnostic Page` selects a section; `Diagnostic Scope` compares just that page against all definitions; `Diagnostic Appearance` compares original graphics/styling against plain controls. It has no runtime or exposed pins.
 
 Test the minimal plugin first in a blank design, then the UI-only plugin, then the full plugin. Record which step freezes. If the minimal plugin freezes, the complete MXCW UI/runtime is not needed to trigger it. If only the UI-only version freezes, investigate native control/layout conversion. If both diagnostics load and only the full version freezes, investigate the runtime/loading path. These diagnostics do not operate the Shure equipment and should not replace the production plugin.
+
+Designer 10.4.0 feedback: `01 Minimal` inserted successfully; `02 UI Only` froze. This isolates the reproduction to the design-time/UI portion. Use `03 Page Probe` next with defaults, before changing any diagnostic properties. This is a diagnostic build, not a confirmed fix.
 
 ## Known Limitations
 

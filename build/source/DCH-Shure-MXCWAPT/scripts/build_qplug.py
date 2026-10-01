@@ -68,6 +68,10 @@ def main() -> None:
     ui_only.write_text(bundle(ui_entry, ["properties", "controls", "layout"]))
     print(minimal)
     print(ui_only)
+    probe = diagnostics / "DCH-MXCW-03-Page-Probe.qplug"
+    probe.write_text(bundle((SRC / "diagnostics" / "page-probe.qplug.lua").read_text(),
+                            ["properties", "controls", "layout"]))
+    print(probe)
 
 
 if __name__ == "__main__":
