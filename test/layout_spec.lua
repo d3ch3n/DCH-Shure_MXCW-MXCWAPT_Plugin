@@ -11,7 +11,8 @@ local function overlaps(a, b)
 end
 
 for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
-  local props = { ["Number of Microphones"] = { Value = n } }
+  for _, show in ipairs({ false, true }) do
+  local props = { ["Number of Microphones"] = { Value = n }, ["Show Individual Microphones"] = { Value = show } }
   local definitions, seen = {}, {}
   for _, control in ipairs(Controls.get(props)) do
     assert(not control.UserPin, "Default pin exposed: " .. control.Name)
@@ -55,11 +56,18 @@ for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
     end
   end
   for name in pairs(definitions) do assert(seen[name], "Control never displayed: " .. name) end
+  local individual_pages = 0
+  for _, page in ipairs(Layout.get_pages(props)) do
+    if page.name:match("^Microphone %d+$") then individual_pages = individual_pages + 1 end
+  end
+  assert(individual_pages == (show and n or 0), "Individual page count")
+  assert((definitions["Mic Gain 1"] ~= nil) == show, "Optional controls must match property")
   for _, mode in ipairs({ "Microphones", "All" }) do
     props["Control Pins"] = { Value = mode }
     for _, control in ipairs(Controls.get(props)) do
       assert(control.UserPin == false and control.PinStyle == "None", "Legacy property exposed pin: " .. control.Name)
     end
+  end
   end
 end
 

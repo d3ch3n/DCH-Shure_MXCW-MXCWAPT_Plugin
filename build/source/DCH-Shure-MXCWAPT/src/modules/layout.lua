@@ -17,6 +17,9 @@ function Layout.get_pages(props)
     pages[#pages + 1] = { name = name }
   end
   local n = Properties.mic_count(props)
+  if Properties.individual_microphones(props) then
+    for i = 1, n do pages[#pages + 1] = { name = "Microphone " .. i } end
+  end
   for _, category in ipairs({ "Stations", "Battery" }) do
     for first = 1, n, BANK_SIZE do
       local last = math.min(first + BANK_SIZE - 1, n)
@@ -42,6 +45,7 @@ function Layout.get_layout(props)
   local pages = Layout.get_pages(props)
   local index = tonumber(props and props.page_index and props.page_index.Value) or 1
   local page = pages[index] and pages[index].name or "Setup"
+  local microphone = tonumber(page:match("^Microphone (%d+)$"))
   graphics[#graphics + 1] = {
     Type = "GroupBox", Position = { 4, 4 }, Size = { Layout.WIDTH - 8, Layout.HEIGHT - 8 },
     Fill = Colors.White, StrokeColor = Colors.Stroke, StrokeWidth = 1, ZOrder = -1,
@@ -128,6 +132,21 @@ function Layout.get_layout(props)
       { "Selected Mic AGC", "AGC" }, { "Selected Flash", "Identify unit" } }, 364, 52)
     label(graphics, "Microphone gain (dB)", 16, 224, 180, 24, true)
     fader("Selected Mic Gain", 64, 256, 32, 180)
+  elseif microphone then
+    local i = microphone
+    fields({ { "Seat Number " .. i, "Seat number" }, { "Mic Seat Name " .. i, "Seat name" },
+      { "Mic Seat Role " .. i, "Role" }, { "Mic Priority " .. i, "Priority" },
+      { "Mic Online " .. i, "Online" }, { "Request List " .. i, "Request list" },
+      { "Speak List " .. i, "Speak list" } }, 16, 52)
+    fields({ { "Mic Active " .. i, "Microphone active" }, { "Mic Speak Request " .. i, "Request to speak" },
+      { "Mic Speak Release " .. i, "Release microphone" }, { "Mic Exclusive Mute " .. i, "Exclusive mute" },
+      { "Mic AGC " .. i, "AGC" }, { "Mic Flash " .. i, "Identify unit" } }, 364, 52)
+    label(graphics, "Battery / Voting", 16, 284, 180, 24, true)
+    fields({ { "Battery Charge " .. i, "Charge (%)" }, { "Battery Runtime " .. i, "Runtime (min)" },
+      { "Battery Health " .. i, "Health (%)" }, { "Battery Cycle " .. i, "Cycle count" },
+      { "Voting Selection " .. i, "Voting selection" } }, 16, 316)
+    label(graphics, "Microphone gain (dB)", 364, 256, 180, 24, true)
+    fader("Mic Gain " .. i, 420, 288, 32, 180)
   elseif page == "Audio" then
     fields({ "Aux Input Pad", "Aux Input AGC", "Aux Input Mute", "Aux Output Mute", "Audio Meter Rate" }, 364, 52)
     for i, name in ipairs({ "Loudspeaker Volume", "Aux Input Gain", "Aux Output Gain" }) do

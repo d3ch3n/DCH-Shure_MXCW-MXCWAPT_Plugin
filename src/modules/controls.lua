@@ -116,6 +116,17 @@ function ControlsDef.get(props)
     ctl(list, "Battery Health " .. i, "Meter", "Output")
     ctl(list, "Battery Cycle " .. i, "Text", "Output")
     ctl(list, "Voting Selection " .. i, "Text", "Output")
+    if Properties.individual_microphones(props) then
+      ctl(list, "Mic Seat Name " .. i, "Text", "Input")
+      ctl(list, "Mic Seat Role " .. i, "ComboBox", "Input", { choices = { "DELEGATE", "CHAIRMAN", "LISTENER", "AMBIENT", "REMOTE_CALLER", "DUAL_DELEGATE" } })
+      ctl(list, "Mic Gain " .. i, "Knob", "Input", { min = -30, max = 10 })
+      ctl(list, "Mic Priority " .. i, "Knob", "Input", { min = 0, max = 5 })
+      ctl(list, "Mic AGC " .. i, "Button", "Input")
+      ctl(list, "Mic Speak Request " .. i, "Button", "Input")
+      ctl(list, "Mic Speak Release " .. i, "Button", "Input")
+      ctl(list, "Mic Exclusive Mute " .. i, "Button", "Input")
+      ctl(list, "Mic Flash " .. i, "Button", "Input")
+    end
   end
 
   ctl(list, "Start Vote Configuration", "Knob", "Input", { min = 1, max = 50, default = 1 })

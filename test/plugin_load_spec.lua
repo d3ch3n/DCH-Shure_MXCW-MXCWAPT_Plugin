@@ -22,7 +22,7 @@ local function with_budget(fn)
   local ticks = 0
   debug.sethook(function()
     ticks = ticks + 1
-    assert(ticks < 5000, "Design-time instruction budget exceeded")
+    assert(ticks < 15000, "Design-time instruction budget exceeded")
   end, "", 10000)
   local ok, err = pcall(fn)
   debug.sethook()
@@ -37,11 +37,13 @@ local function properties(env, count)
 end
 
 for _, count in ipairs({ 1, 16, 17, 20, 125 }) do
+  for _, show in ipairs({ false, true }) do
   with_budget(function()
     local env = environment()
     assert(load(source, "@" .. path, "t", env))()
     assert(env.package == nil and env.require == nil, "Bundle polluted global module state")
     local props = properties(env, count)
+    props["Show Individual Microphones"].Value = show
     local controls = env.GetControls(props)
     assert(#env.GetPins(props) == 0 and env.PluginInfo.ShowDebug == false)
     props.plugin_show_debug = { Value = true }
@@ -64,6 +66,7 @@ for _, count in ipairs({ 1, 16, 17, 20, 125 }) do
     end
     for _, control in ipairs(controls) do assert(seen[control.Name], "Orphan control: " .. control.Name) end
   end)
+  end
 end
 
 -- Designer callbacks can execute in separate Lua environments.

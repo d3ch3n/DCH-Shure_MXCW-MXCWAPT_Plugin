@@ -1,6 +1,7 @@
 assert(loadfile("build/DCH-Shure-MXCWAPT.qplug"))()
 local props = {}
 for _, property in ipairs(GetProperties()) do props[property.Name] = { Value = property.Value } end
+if arg[1] == "individual" then props["Show Individual Microphones"].Value = true end
 local function row(values)
   for index, value in ipairs(values) do values[index] = '"' .. tostring(value):gsub('"', '""') .. '"' end
   print(table.concat(values, "\t"))

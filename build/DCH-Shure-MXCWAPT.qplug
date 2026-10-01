@@ -1,7 +1,7 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT",
-  Version = "0.1.7",
-  BuildVersion = "0.1.7.0",
+  Version = "0.1.8",
+  BuildVersion = "0.1.8.0",
   ShowDebug = false,
   Id = "dch.shure.mxcwapt.control",
   Author = "DCH",
@@ -352,7 +352,7 @@ function State:set_station_seat(station, seat)
   station, seat = tonumber(station), tonumber(seat)
   if not station or station < 1 or station > self.max_mics or not seat then return end
   local old = self.station_to_seat[station]
-  if old then self.seat_to_station[old] = nil end
+  if old and self.seat_to_station[old] == station then self.seat_to_station[old] = nil end
   self.station_to_seat[station] = seat
   self.seat_to_station[seat] = station
   self.seats[seat] = self.seats[seat] or { seat_number = seat }
@@ -455,6 +455,11 @@ function Properties.get()
       Value = 16,
     },
     {
+      Name = "Show Individual Microphones",
+      Type = "boolean",
+      Value = false,
+    },
+    {
       Name = "Debug Print",
       Type = "enum",
       Choices = { "None", "Tx", "Rx", "Tx/Rx", "All" },
@@ -469,6 +474,10 @@ function Properties.mic_count(props)
   if value < 1 then return 1 end
   if value > 125 then return 125 end
   return math.floor(value)
+end
+
+function Properties.individual_microphones(props)
+  return props and props["Show Individual Microphones"] and props["Show Individual Microphones"].Value == true or false
 end
 
 return Properties
@@ -594,6 +603,17 @@ function ControlsDef.get(props)
     ctl(list, "Battery Health " .. i, "Meter", "Output")
     ctl(list, "Battery Cycle " .. i, "Text", "Output")
     ctl(list, "Voting Selection " .. i, "Text", "Output")
+    if Properties.individual_microphones(props) then
+      ctl(list, "Mic Seat Name " .. i, "Text", "Input")
+      ctl(list, "Mic Seat Role " .. i, "ComboBox", "Input", { choices = { "DELEGATE", "CHAIRMAN", "LISTENER", "AMBIENT", "REMOTE_CALLER", "DUAL_DELEGATE" } })
+      ctl(list, "Mic Gain " .. i, "Knob", "Input", { min = -30, max = 10 })
+      ctl(list, "Mic Priority " .. i, "Knob", "Input", { min = 0, max = 5 })
+      ctl(list, "Mic AGC " .. i, "Button", "Input")
+      ctl(list, "Mic Speak Request " .. i, "Button", "Input")
+      ctl(list, "Mic Speak Release " .. i, "Button", "Input")
+      ctl(list, "Mic Exclusive Mute " .. i, "Button", "Input")
+      ctl(list, "Mic Flash " .. i, "Button", "Input")
+    end
   end
 
   ctl(list, "Start Vote Configuration", "Knob", "Input", { min = 1, max = 50, default = 1 })
@@ -656,6 +676,9 @@ function Layout.get_pages(props)
     pages[#pages + 1] = { name = name }
   end
   local n = Properties.mic_count(props)
+  if Properties.individual_microphones(props) then
+    for i = 1, n do pages[#pages + 1] = { name = "Microphone " .. i } end
+  end
   for _, category in ipairs({ "Stations", "Battery" }) do
     for first = 1, n, BANK_SIZE do
       local last = math.min(first + BANK_SIZE - 1, n)
@@ -681,6 +704,7 @@ function Layout.get_layout(props)
   local pages = Layout.get_pages(props)
   local index = tonumber(props and props.page_index and props.page_index.Value) or 1
   local page = pages[index] and pages[index].name or "Setup"
+  local microphone = tonumber(page:match("^Microphone (%d+)$"))
   graphics[#graphics + 1] = {
     Type = "GroupBox", Position = { 4, 4 }, Size = { Layout.WIDTH - 8, Layout.HEIGHT - 8 },
     Fill = Colors.White, StrokeColor = Colors.Stroke, StrokeWidth = 1, ZOrder = -1,
@@ -767,6 +791,21 @@ function Layout.get_layout(props)
       { "Selected Mic AGC", "AGC" }, { "Selected Flash", "Identify unit" } }, 364, 52)
     label(graphics, "Microphone gain (dB)", 16, 224, 180, 24, true)
     fader("Selected Mic Gain", 64, 256, 32, 180)
+  elseif microphone then
+    local i = microphone
+    fields({ { "Seat Number " .. i, "Seat number" }, { "Mic Seat Name " .. i, "Seat name" },
+      { "Mic Seat Role " .. i, "Role" }, { "Mic Priority " .. i, "Priority" },
+      { "Mic Online " .. i, "Online" }, { "Request List " .. i, "Request list" },
+      { "Speak List " .. i, "Speak list" } }, 16, 52)
+    fields({ { "Mic Active " .. i, "Microphone active" }, { "Mic Speak Request " .. i, "Request to speak" },
+      { "Mic Speak Release " .. i, "Release microphone" }, { "Mic Exclusive Mute " .. i, "Exclusive mute" },
+      { "Mic AGC " .. i, "AGC" }, { "Mic Flash " .. i, "Identify unit" } }, 364, 52)
+    label(graphics, "Battery / Voting", 16, 284, 180, 24, true)
+    fields({ { "Battery Charge " .. i, "Charge (%)" }, { "Battery Runtime " .. i, "Runtime (min)" },
+      { "Battery Health " .. i, "Health (%)" }, { "Battery Cycle " .. i, "Cycle count" },
+      { "Voting Selection " .. i, "Voting selection" } }, 16, 316)
+    label(graphics, "Microphone gain (dB)", 364, 256, 180, 24, true)
+    fader("Mic Gain " .. i, 420, 288, 32, 180)
   elseif page == "Audio" then
     fields({ "Aux Input Pad", "Aux Input AGC", "Aux Input Mute", "Aux Output Mute", "Audio Meter Rate" }, 364, 52)
     for i, name in ipairs({ "Loudspeaker Volume", "Aux Input Gain", "Aux Output Gain" }) do
@@ -924,6 +963,14 @@ function Runtime.install(env)
     return seat_for_station(selected_station())
   end
 
+  for i = 1, max_mics do
+    local seat_control = ctl("Seat Number " .. i)
+    if seat_control and tonumber(seat_control.Value) and seat_control.Value >= 1 then
+      state:set_station_seat(i, math.floor(seat_control.Value))
+    end
+  end
+  set_value("Selected Seat Number", selected_seat())
+
   local function apply_global(command, value)
     if command == "GLOBAL_MUTE" then set_bool("Global Mute", Protocol.to_bool(value)) end
     if command == "AUDIO_INPUT_SPEAKLIST" then set_bool("Audio Input Speaklist", Protocol.to_bool(value)) end
@@ -973,14 +1020,19 @@ function Runtime.install(env)
       diag:info("Report for unmapped seat " .. tostring(index) .. " command " .. tostring(command))
       return
     end
-    if command == "MIC_STATUS" then set_bool("Mic Active " .. station, Protocol.to_bool(value)) end
+    if command == "MIC_STATUS" then
+      set_bool("Mic Active " .. station, Protocol.to_bool(value))
+      if station == selected_station() then set_bool("Selected Mic Status", Protocol.to_bool(value)) end
+    end
     if command == "UNIT_AVAILABLE" then set_bool("Mic Online " .. station, value == "AVAILABLE") end
     if command == "SEAT_NAME" then
       set_string("Mic Name " .. station, value)
+      set_string("Mic Seat Name " .. station, value)
       if station == selected_station() then set_string("Selected Seat Name", value) end
     end
     if command == "ROLE" then
       set_string("Mic Role " .. station, value)
+      set_string("Mic Seat Role " .. station, value)
       if station == selected_station() then set_string("Selected Role", value) end
     end
     if command == "REQUEST_LIST_STATUS" then set_bool("Request List " .. station, value == "IN_LIST") end
@@ -989,6 +1041,10 @@ function Runtime.install(env)
     if command == "BATT_RUN_TIME" then set_string("Battery Runtime " .. station, value) end
     if command == "BATT_HEALTH" then set_value("Battery Health " .. station, value == "255" and 0 or value) end
     if command == "BATT_CYCLE" then set_string("Battery Cycle " .. station, value) end
+    if command == "MIC_GAIN" then set_value("Mic Gain " .. station, Protocol.tpci_to_db(value)) end
+    if command == "MIC_PRIORITY" then set_value("Mic Priority " .. station, value) end
+    if command == "MIC_AGC" then set_bool("Mic AGC " .. station, Protocol.to_bool(value)) end
+    if command == "EXCLUSIVE_MUTE" then set_bool("Mic Exclusive Mute " .. station, Protocol.to_bool(value)) end
     if command == "MIC_GAIN" and station == selected_station() then set_value("Selected Mic Gain", Protocol.tpci_to_db(value)) end
     if command == "MIC_PRIORITY" and station == selected_station() then set_value("Selected Mic Priority", value) end
     if command == "MIC_AGC" and station == selected_station() then set_bool("Selected Mic AGC", Protocol.to_bool(value)) end
@@ -1012,6 +1068,9 @@ function Runtime.install(env)
     send("GET", "INTERRUPT_MODE")
     send("GET", "UNIT_AVAILABLE", nil, 0)
     send("GET", "MIC_STATUS", nil, 0)
+    send("GET", "MIC_GAIN", nil, 0)
+    send("GET", "MIC_PRIORITY", nil, 0)
+    send("GET", "MIC_AGC", nil, 0)
     send("GET", "REQUEST_LIST_STATUS", nil, 0)
     send("GET", "SPEAK_LIST_STATUS", nil, 0)
     send("GET", "ROLE", nil, 0)
@@ -1144,7 +1203,9 @@ function Runtime.install(env)
   end)
   on_change("Selected Seat Number", function(control)
     local station = selected_station()
-    state:set_station_seat(station, math.floor(control.Value or station))
+    local seat = math.floor(control.Value or station)
+    state:set_station_seat(station, seat)
+    set_value("Seat Number " .. station, seat)
   end)
 
   on_change("Device ID", function(c) send("SET", "DEVICE_ID", c.String) end)
@@ -1186,8 +1247,20 @@ function Runtime.install(env)
   on_button("Selected Flash", function() send("SET", "FLASH", "ON", selected_seat()) end)
 
   for i = 1, max_mics do
-    on_change("Seat Number " .. i, function(c) state:set_station_seat(i, math.floor(c.Value or i)) end)
+    on_change("Seat Number " .. i, function(c)
+      state:set_station_seat(i, math.floor(c.Value or i))
+      if i == selected_station() then set_value("Selected Seat Number", seat_for_station(i)) end
+    end)
     on_change("Mic Active " .. i, function(c) send("SET", "MIC_STATUS", Protocol.from_bool(c.Boolean), seat_for_station(i)) end)
+    on_change("Mic Seat Name " .. i, function(c) send("SET", "SEAT_NAME", c.String, seat_for_station(i)) end)
+    on_change("Mic Seat Role " .. i, function(c) send("SET", "ROLE", c.String, seat_for_station(i)) end)
+    on_change("Mic Gain " .. i, function(c) send("SET", "MIC_GAIN", Protocol.db_to_tpci(c.Value), seat_for_station(i)) end)
+    on_change("Mic Priority " .. i, function(c) send("SET", "MIC_PRIORITY", math.floor(c.Value or 0), seat_for_station(i)) end)
+    on_change("Mic AGC " .. i, function(c) send("SET", "MIC_AGC", Protocol.from_bool(c.Boolean), seat_for_station(i)) end)
+    on_button("Mic Speak Request " .. i, function() send("SET", "SPEAK_REQUEST", "TRUE", seat_for_station(i)) end)
+    on_button("Mic Speak Release " .. i, function() send("SET", "SPEAK_RELEASE", "TRUE", seat_for_station(i)) end)
+    on_change("Mic Exclusive Mute " .. i, function(c) send("SET", "EXCLUSIVE_MUTE", Protocol.from_bool(c.Boolean), seat_for_station(i)) end)
+    on_button("Mic Flash " .. i, function() send("SET", "FLASH", "ON", seat_for_station(i)) end)
   end
 
   update_connection("Disconnected")

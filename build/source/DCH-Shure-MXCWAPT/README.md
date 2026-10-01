@@ -42,6 +42,13 @@ The parser supports fragmented TCP reads, multiple messages in one packet, async
   - Choices: `None`, `Tx`, `Rx`, `Tx/Rx`, `All`
   - Prints formatted TX/RX traffic and diagnostics according to the selected level.
 
+- `Show Individual Microphones`
+  - Type: boolean (`Yes` / `No` in Designer)
+  - Default: `No`
+  - When enabled, creates `Microphone 1` through `Microphone N`, where N is `Number of Microphones`.
+  - Each page has independent seat mapping, name, role, priority, gain fader, AGC, microphone on/off, speaking actions, exclusive mute, identification, availability/list states, battery data, and voting selection.
+  - Individual pages do not depend on the station selected on the general Microphones page. Optional controls are only created when this property is enabled. All pins remain disabled.
+
 ## Connection Controls
 
 - `IP Address`
@@ -75,6 +82,7 @@ Each station has a `Seat Number N` control. Reports from the MXCWAPT are mapped 
 - `System`
 - `Conference`
 - `Microphones`
+- `Microphone 1` through `Microphone N` (optional)
 - `Audio`
 - `Dante`
 - `RF`
@@ -121,6 +129,7 @@ lua test/parser_spec.lua
 lua test/layout_spec.lua
 lua test/plugin_load_spec.lua
 lua test/runtime_connection_spec.lua
+lua test/individual_microphones_spec.lua
 ```
 
 The local tests validate:
@@ -136,6 +145,7 @@ The local tests validate:
 - All pages at `1`, `16`, `17`, `20`, and `125` stations: complete control coverage, no overlapping labels/controls, bounds, valid control styles, and zero pin exposure even with legacy pin properties
 - Generated plugin loading without global `package` or `require`, fresh environments for callbacks, bounded design-time execution, no network activity with an empty IP, and simulated report/control handling
 - Automatic connection on startup, persisted Off override, blank IP handling, address/port changes, and manual disconnect/retry cancellation
+- Individual microphone pages enabled/disabled, independent command routing, report feedback, restored non-sequential seat mapping, and synchronization with the general page
 
 The generated file starts with `PluginInfo` and uses a private module loader. It does not depend on external Lua files or alter `package.preload`. Page layouts include only controls displayed on that page, following the [Q-SYS framework example](https://help.qsys.com/DeveloperHelp/Content/Code_Examples/Basic_Plugin_Framework.htm).
 

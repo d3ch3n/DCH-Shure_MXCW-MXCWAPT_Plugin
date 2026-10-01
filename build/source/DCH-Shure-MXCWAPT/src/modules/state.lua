@@ -43,7 +43,7 @@ function State:set_station_seat(station, seat)
   station, seat = tonumber(station), tonumber(seat)
   if not station or station < 1 or station > self.max_mics or not seat then return end
   local old = self.station_to_seat[station]
-  if old then self.seat_to_station[old] = nil end
+  if old and self.seat_to_station[old] == station then self.seat_to_station[old] = nil end
   self.station_to_seat[station] = seat
   self.seat_to_station[seat] = station
   self.seats[seat] = self.seats[seat] or { seat_number = seat }

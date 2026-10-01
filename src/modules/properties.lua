@@ -10,6 +10,11 @@ function Properties.get()
       Value = 16,
     },
     {
+      Name = "Show Individual Microphones",
+      Type = "boolean",
+      Value = false,
+    },
+    {
       Name = "Debug Print",
       Type = "enum",
       Choices = { "None", "Tx", "Rx", "Tx/Rx", "All" },
@@ -24,6 +29,10 @@ function Properties.mic_count(props)
   if value < 1 then return 1 end
   if value > 125 then return 125 end
   return math.floor(value)
+end
+
+function Properties.individual_microphones(props)
+  return props and props["Show Individual Microphones"] and props["Show Individual Microphones"].Value == true or false
 end
 
 return Properties
