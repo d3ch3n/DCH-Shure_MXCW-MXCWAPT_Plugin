@@ -17,6 +17,9 @@ local function fixture(address)
   -- Simulate an existing design whose Connect toggle was saved Off.
   controls.Connect.Boolean = false
   local socket = {
+    payload = "", sent = {},
+    Write = function(self, message) self.sent[#self.sent + 1] = message end,
+    Read = function(self) return self.payload end,
     Connect = function(_, ip, port) attempts[#attempts + 1] = { ip, port } end,
     Disconnect = function() end,
   }
@@ -26,7 +29,11 @@ local function fixture(address)
     TcpSocket = { New = function() return socket end },
     Timer = { New = function()
       local timer = { running = false }
-      timer.Start = function(self) self.running = true end
+      timer.Start = function(self, interval)
+        self.running = true
+        self.interval = interval
+        self.starts = (self.starts or 0) + 1
+      end
       timer.Stop = function(self) self.running = false end
       timers[#timers + 1] = timer
       return timer
@@ -40,22 +47,62 @@ end
 local controls, socket, attempts, timers = fixture("192.0.2.10")
 assert(controls.Connect.Boolean and #attempts == 1, "Startup must enable and connect")
 assert(attempts[1][1] == "192.0.2.10" and attempts[1][2] == 2202)
+socket.Connected()
+assert(controls["Connection Status"].String == "Connected / Synchronizing")
+assert(not controls.Synchronized.Boolean, "Sending queries is not proof of synchronization")
+socket.payload = "< REP MODEL {MXCWAPT} >"
+socket.Data()
+assert(controls["Connection Status"].String == "OK" and controls.Connected.Boolean)
+assert(controls.Synchronized.Boolean)
+assert(timers[2].running and timers[2].interval == 15)
+assert(timers[3].running and timers[3].interval == 5)
+local starts = timers[2].starts
+socket.Data()
+assert(timers[2].starts == starts + 1, "Each MODEL reply renews the response deadline")
+socket.payload = "< REP GLOBAL_MUTE OFF >"
+socket.Data()
+assert(timers[2].starts == starts + 1, "Unrelated traffic must not renew the MODEL deadline")
+socket.payload = "< REP MODEL {MXCWAPT} >"
+timers[3].EventHandler()
+assert(socket.sent[#socket.sent] == "< GET MODEL >", "Poll the device while TCP is idle")
+controls["Mic Online 1"].Boolean = true
+timers[2].EventHandler()
+assert(controls["Connection Status"].String == "Missing", "Silent cable loss must become Missing")
+assert(not controls.Connected.Boolean and not controls.Synchronized.Boolean and not controls["Mic Online 1"].Boolean)
+assert(not timers[2].running and not timers[3].running and timers[1].running)
+socket.Data()
+assert(controls["Connection Status"].String == "Missing", "Late reports must not restore a dead session")
+timers[1].EventHandler()
+assert(controls["Connection Status"].String == "Missing", "Keep Missing during retries")
+socket.Connected()
+socket.Data()
+assert(controls["Connection Status"].String == "OK", "Valid reply after reconnect restores OK")
+local baseline = #attempts
 socket.Closed()
+assert(controls["Connection Status"].String == "Missing")
 assert(timers[1].running, "Unexpected closure must schedule reconnect")
 controls.Connect.Boolean = false
 controls.Connect.EventHandler(controls.Connect)
 assert(not timers[1].running, "Off must cancel scheduled reconnect")
 timers[1].EventHandler()
-assert(#attempts == 1, "Stale retry must not reconnect while Off")
+assert(#attempts == baseline, "Stale retry must not reconnect while Off")
+assert(not timers[2].running and not timers[3].running)
+assert(controls["Connection Status"].String == "Disconnected")
 controls["IP Address"].String = "192.0.2.11"
 controls["IP Address"].EventHandler(controls["IP Address"])
-assert(#attempts == 1, "IP edit while Off must not reconnect")
+assert(#attempts == baseline, "IP edit while Off must not reconnect")
 controls.Connect.Boolean = true
 controls.Connect.EventHandler(controls.Connect)
-assert(#attempts == 2 and attempts[2][1] == "192.0.2.11")
+assert(#attempts == baseline + 1 and attempts[#attempts][1] == "192.0.2.11")
 controls.Port.Value = 2203
 controls.Port.EventHandler(controls.Port)
-assert(#attempts == 3 and attempts[3][2] == 2203, "Port edit must restart enabled connection")
+assert(#attempts == baseline + 2 and attempts[#attempts][2] == 2203, "Port edit must restart enabled connection")
+
+for _, event in ipairs({ "Error", "Timeout" }) do
+  local c, s = fixture("192.0.2.10")
+  s[event](s, "network failure")
+  assert(c["Connection Status"].String == "Missing", event .. " must set Missing")
+end
 
 for _, address in ipairs({ "", "  " }) do
   controls, socket, attempts = fixture(address)
@@ -66,4 +113,4 @@ for _, address in ipairs({ "", "  " }) do
   assert(#attempts == 1 and attempts[1][1] == "192.0.2.12", "Setting IP must auto-connect")
 end
 
-print("runtime_connection_spec.lua: ok (startup On, automatic connection, empty IP, edits, manual Off)")
+print("runtime_connection_spec.lua: ok (startup On, confirmed OK, heartbeat, silent loss, Missing, recovery, manual Off)")

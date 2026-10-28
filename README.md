@@ -65,8 +65,11 @@ Connection states are:
 - `Disconnected`
 - `Connecting`
 - `Connected / Synchronizing`
-- `Online`
+- `OK` (confirmed by a valid MODEL response)
+- `Missing` (TCP failure or no MODEL response for 15 seconds; automatic retry)
 - `Fault`
+
+The plugin polls `GET MODEL` every 5 seconds while connected. `OK` is only shown after a valid response, not merely after opening the socket. Loss of communication clears Connected, Synchronized, and microphone availability indicators. Manual Connect Off remains `Disconnected` and stops monitoring and retries.
 
 From version `0.1.7`, `Connect` is always On at runtime startup, including when the design previously saved it Off. The plugin connects automatically when an IP is configured. With an empty IP, it stays disconnected with Connect On; entering an IP starts the connection. Editing IP or port restarts an enabled connection. Turning Connect Off cancels pending retries for the current session.
 

@@ -18,6 +18,8 @@ function Runtime.install(env)
   local sock = TcpSocket and TcpSocket.New() or nil
   local reconnect_timer = Timer and Timer.New() or nil
   local sync_timer = Timer and Timer.New() or nil
+  local heartbeat_timer = Timer and Timer.New() or nil
+  local session_active = false
   local reconnect_delay = 5
   local intentional_disconnect = false
 
@@ -50,8 +52,9 @@ function Runtime.install(env)
     state:set_connection(status, err)
     set_string("Connection Status", status)
     set_string("Last Error", err or "")
-    set_bool("Connected", status == "Online" or status == "Connected / Synchronizing")
-    set_bool("Synchronized", status == "Online")
+    set_bool("Connected", status == "OK" or status == "Connected / Synchronizing")
+    set_bool("Synchronized", status == "OK")
+    state.synced = status == "OK"
   end
 
   local function send_raw(message)
@@ -60,7 +63,8 @@ function Runtime.install(env)
       return
     end
     diag:tx(message)
-    sock:Write(message)
+    local ok, err = pcall(function() sock:Write(message) end)
+    if not ok and sock.Error then sock.Error(sock, err) end
   end
 
   local function send(verb, command, value, index, second_index)
@@ -178,6 +182,7 @@ function Runtime.install(env)
   end
 
   local function request_initial_state()
+    if not session_active then return end
     update_connection("Connected / Synchronizing")
     send("GET", "ALL")
     send("GET", "MODEL")
@@ -199,8 +204,6 @@ function Runtime.install(env)
     send("GET", "BATT_RUN_TIME", nil, 0)
     send("GET", "BATT_HEALTH", nil, 0)
     send("GET", "BATT_CYCLE", nil, 0)
-    state.synced = true
-    update_connection("Online")
   end
 
   local function connect()
@@ -215,12 +218,15 @@ function Runtime.install(env)
       return
     end
     intentional_disconnect = false
-    update_connection("Connecting")
+    if state.connection ~= "Missing" then update_connection("Connecting") end
     sock:Connect(ip, port or 2202)
   end
 
   local function disconnect()
     intentional_disconnect = true
+    session_active = false
+    if sync_timer then sync_timer:Stop() end
+    if heartbeat_timer then heartbeat_timer:Stop() end
     if reconnect_timer then reconnect_timer:Stop() end
     if sock then sock:Disconnect() end
     update_connection("Disconnected")
@@ -233,25 +239,50 @@ function Runtime.install(env)
     reconnect_timer:Start(reconnect_delay)
   end
 
+  local function missing(reason)
+    session_active = false
+    if sync_timer then sync_timer:Stop() end
+    if heartbeat_timer then heartbeat_timer:Stop() end
+    update_connection("Missing", reason)
+    for i = 1, max_mics do set_bool("Mic Online " .. i, false) end
+    schedule_reconnect()
+  end
+
+  if sync_timer then
+    sync_timer.EventHandler = function()
+      if not session_active then return end
+      missing("No MODEL response for 15 seconds")
+      if sock then sock:Disconnect() end
+    end
+  end
+  if heartbeat_timer then
+    heartbeat_timer.EventHandler = function()
+      if session_active then send("GET", "MODEL") end
+    end
+  end
+
   if sock then
     sock.Connected = function()
+      if intentional_disconnect or (ctl("Connect") and not ctl("Connect").Boolean) then return end
+      session_active = true
+      if reconnect_timer then reconnect_timer:Stop() end
       parser = Protocol.new_parser()
+      if sync_timer then sync_timer:Start(15) end
+      if heartbeat_timer then heartbeat_timer:Start(5) end
       request_initial_state()
     end
     sock.Reconnect = function()
-      update_connection("Connecting")
+      if not intentional_disconnect then missing("TCP reconnecting") end
     end
     sock.Closed = function()
-      update_connection("Disconnected")
-      schedule_reconnect()
+      if intentional_disconnect then update_connection("Disconnected")
+      else missing("TCP connection closed") end
     end
     sock.Error = function(_, err)
-      update_connection("Fault", tostring(err or "TCP error"))
-      schedule_reconnect()
+      if not intentional_disconnect then missing(tostring(err or "TCP error")) end
     end
     sock.Timeout = function()
-      update_connection("Fault", "TCP timeout")
-      schedule_reconnect()
+      if not intentional_disconnect then missing("TCP timeout") end
     end
     sock.Data = function()
       local data = sock:Read(sock.BufferLength)
@@ -259,6 +290,10 @@ function Runtime.install(env)
       for _, msg in ipairs(Protocol.feed(parser, data)) do
         if msg.verb == "REP" then
           apply_report(msg)
+          if session_active and msg.command == "MODEL" and not msg.index and msg.value and msg.value ~= "" then
+            if sync_timer then sync_timer:Stop() sync_timer:Start(15) end
+            update_connection("OK")
+          end
         elseif msg.verb == "ERR" then
           update_connection("Fault", "Device returned ERR")
         elseif msg.error then
