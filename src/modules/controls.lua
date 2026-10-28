@@ -20,7 +20,7 @@ local function ctl(list, name, control_type, direction, opts)
   if opts.choices then item.Choices = opts.choices end
   if opts.default ~= nil then item.DefaultValue = opts.default end
   if qsys_control_type == "Indicator" then
-    item.IndicatorType = "Led"
+    item.IndicatorType = opts.indicator_type or "Led"
   end
   if qsys_control_type == "Knob" then
     item.ControlUnit = (name:find("Gain") or name:find("Volume")) and "dB" or "Integer"
@@ -48,7 +48,7 @@ function ControlsDef.get(props)
   ctl(list, "Connect", "Button", "Input", { default = true })
   ctl(list, "Refresh/Resync", "Button", "Input")
   ctl(list, "Connected", "Indicator", "Output")
-  ctl(list, "Connection Status", "Text", "Output")
+  ctl(list, "Connection Status", "Indicator", "Output", { indicator_type = "Status" })
   ctl(list, "Last Error", "Text", "Output")
   ctl(list, "Synchronized", "Indicator", "Output")
 

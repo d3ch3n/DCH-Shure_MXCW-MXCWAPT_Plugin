@@ -50,6 +50,9 @@ function Runtime.install(env)
 
   local function update_connection(status, err)
     state:set_connection(status, err)
+    local codes = { OK = 0, Fault = 2, Disconnected = 3, Missing = 4,
+      Connecting = 5, Reconnecting = 5, ["Connected / Synchronizing"] = 5 }
+    set_value("Connection Status", codes[status] or 2)
     set_string("Connection Status", status)
     set_string("Last Error", err or "")
     set_bool("Connected", status == "OK" or status == "Connected / Synchronizing")
@@ -218,7 +221,7 @@ function Runtime.install(env)
       return
     end
     intentional_disconnect = false
-    if state.connection ~= "Missing" then update_connection("Connecting") end
+    update_connection((state.connection == "Missing" or state.connection == "Reconnecting") and "Reconnecting" or "Connecting")
     sock:Connect(ip, port or 2202)
   end
 
@@ -272,7 +275,10 @@ function Runtime.install(env)
       request_initial_state()
     end
     sock.Reconnect = function()
-      if not intentional_disconnect then missing("TCP reconnecting") end
+      if not intentional_disconnect then
+        missing("TCP reconnecting")
+        update_connection("Reconnecting")
+      end
     end
     sock.Closed = function()
       if intentional_disconnect then update_connection("Disconnected")

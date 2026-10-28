@@ -6,7 +6,7 @@ The plugin communicates directly with the MXCWAPT over the official Shure comman
 
 Q-SYS Designer plugin name: `DCH~Shure~MXCW-MXCWAPT`, shown under `DCH > Shure > MXCW-MXCWAPT`.
 
-Current plugin version: `1.0.0` (build `1.0.0.0`). This release includes optional individual microphone pages, Dante channel labels in both rows, and confirmed `OK` / `Missing` connection monitoring. Hardware validation is still required.
+Current plugin version: `1.0.1` (build `1.0.1.0`). This release includes optional individual microphone pages, Dante channel labels in both rows, and confirmed `OK` / `Missing` connection monitoring. Hardware validation is still required.
 
 ## Supported Equipment
 
@@ -66,10 +66,13 @@ Connection states are:
 
 - `Disconnected`
 - `Connecting`
+- `Reconnecting`
 - `Connected / Synchronizing`
 - `OK` (confirmed by a valid MODEL response)
 - `Missing` (TCP failure or no MODEL response for 15 seconds; automatic retry)
 - `Fault`
+
+Connection Status uses the native Q-SYS Status indicator: OK = 0 (green), Missing = 4 (red), Connecting / Reconnecting / Synchronizing = 5 (blue), Disconnected = 3 (gray), Fault = 2 (red). Control pins remain disabled.
 
 The plugin polls `GET MODEL` every 5 seconds while connected. `OK` is only shown after a valid response, not merely after opening the socket. Loss of communication clears Connected, Synchronized, and microphone availability indicators. Manual Connect Off remains `Disconnected` and stops monitoring and retries.
 

@@ -47,6 +47,8 @@ for _, n in ipairs({ 1, 16, 17, 20, 125 }) do
           assert(item.Style == "Button" and item.ButtonStyle == definition.ButtonType, name)
         elseif definition.Choices then assert(item.Style == "ComboBox", name)
         elseif definition.IndicatorType == "Led" then assert(item.Style == "Led", name)
+        elseif definition.IndicatorType == "Status" then
+          assert(item.Style == nil and item.Color == nil and item.TextColor == nil, "Use native status styling")
         else assert(item.Style == "Text" or (item.Style == "Fader" and definition.ControlUnit == "dB"), name) end
       end
     end

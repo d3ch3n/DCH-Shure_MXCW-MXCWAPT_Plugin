@@ -47,6 +47,7 @@ end
 local controls, socket, attempts, timers = fixture("192.0.2.10")
 assert(controls.Connect.Boolean and #attempts == 1, "Startup must enable and connect")
 assert(attempts[1][1] == "192.0.2.10" and attempts[1][2] == 2202)
+assert(controls["Connection Status"].Value == 5, "Connecting uses native blue status")
 socket.Connected()
 assert(controls["Connection Status"].String == "Connected / Synchronizing")
 assert(not controls.Synchronized.Boolean, "Sending queries is not proof of synchronization")
@@ -54,6 +55,7 @@ socket.payload = "< REP MODEL {MXCWAPT} >"
 socket.Data()
 assert(controls["Connection Status"].String == "OK" and controls.Connected.Boolean)
 assert(controls.Synchronized.Boolean)
+assert(controls["Connection Status"].Value == 0, "OK uses native green status")
 assert(timers[2].running and timers[2].interval == 15)
 assert(timers[3].running and timers[3].interval == 5)
 local starts = timers[2].starts
@@ -68,12 +70,15 @@ assert(socket.sent[#socket.sent] == "< GET MODEL >", "Poll the device while TCP 
 controls["Mic Online 1"].Boolean = true
 timers[2].EventHandler()
 assert(controls["Connection Status"].String == "Missing", "Silent cable loss must become Missing")
+assert(controls["Connection Status"].Value == 4, "Missing uses native red status")
 assert(not controls.Connected.Boolean and not controls.Synchronized.Boolean and not controls["Mic Online 1"].Boolean)
 assert(not timers[2].running and not timers[3].running and timers[1].running)
 socket.Data()
 assert(controls["Connection Status"].String == "Missing", "Late reports must not restore a dead session")
 timers[1].EventHandler()
-assert(controls["Connection Status"].String == "Missing", "Keep Missing during retries")
+assert(controls["Connection Status"].String == "Reconnecting" and controls["Connection Status"].Value == 5,
+  "Reconnect attempt uses native blue status")
+assert(not controls.Connected.Boolean and not controls.Synchronized.Boolean)
 socket.Connected()
 socket.Data()
 assert(controls["Connection Status"].String == "OK", "Valid reply after reconnect restores OK")
@@ -102,6 +107,13 @@ for _, event in ipairs({ "Error", "Timeout" }) do
   local c, s = fixture("192.0.2.10")
   s[event](s, "network failure")
   assert(c["Connection Status"].String == "Missing", event .. " must set Missing")
+end
+
+do
+  local c, s = fixture("192.0.2.10")
+  s.Reconnect()
+  assert(c["Connection Status"].Value == 5 and c["Connection Status"].String == "Reconnecting")
+  assert(not c.Connected.Boolean and not c.Synchronized.Boolean)
 end
 
 for _, address in ipairs({ "", "  " }) do

@@ -76,7 +76,9 @@ function Layout.get_layout(props)
       IsReadOnly = def.ReadOnly, StrokeWidth = 1, StrokeColor = Colors.Stroke,
       Color = Colors.Grey, TextColor = Colors.Black,
     }
-    if style == "Button" then
+    if def.IndicatorType == "Status" then
+      item.Style, item.Color, item.TextColor = nil, nil, nil
+    elseif style == "Button" then
       item.ButtonStyle = def.ButtonType
       item.ButtonVisualStyle = "Flat"
       item.Legend = legend or name

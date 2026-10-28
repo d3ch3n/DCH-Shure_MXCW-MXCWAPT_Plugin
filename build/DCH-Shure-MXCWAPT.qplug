@@ -1,7 +1,7 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT",
-  Version = "1.0.0",
-  BuildVersion = "1.0.0.0",
+  Version = "1.0.1",
+  BuildVersion = "1.0.1.0",
   ShowDebug = false,
   Id = "dch.shure.mxcwapt.control",
   Author = "DCH",
@@ -507,7 +507,7 @@ local function ctl(list, name, control_type, direction, opts)
   if opts.choices then item.Choices = opts.choices end
   if opts.default ~= nil then item.DefaultValue = opts.default end
   if qsys_control_type == "Indicator" then
-    item.IndicatorType = "Led"
+    item.IndicatorType = opts.indicator_type or "Led"
   end
   if qsys_control_type == "Knob" then
     item.ControlUnit = (name:find("Gain") or name:find("Volume")) and "dB" or "Integer"
@@ -535,7 +535,7 @@ function ControlsDef.get(props)
   ctl(list, "Connect", "Button", "Input", { default = true })
   ctl(list, "Refresh/Resync", "Button", "Input")
   ctl(list, "Connected", "Indicator", "Output")
-  ctl(list, "Connection Status", "Text", "Output")
+  ctl(list, "Connection Status", "Indicator", "Output", { indicator_type = "Status" })
   ctl(list, "Last Error", "Text", "Output")
   ctl(list, "Synchronized", "Indicator", "Output")
 
@@ -735,7 +735,9 @@ function Layout.get_layout(props)
       IsReadOnly = def.ReadOnly, StrokeWidth = 1, StrokeColor = Colors.Stroke,
       Color = Colors.Grey, TextColor = Colors.Black,
     }
-    if style == "Button" then
+    if def.IndicatorType == "Status" then
+      item.Style, item.Color, item.TextColor = nil, nil, nil
+    elseif style == "Button" then
       item.ButtonStyle = def.ButtonType
       item.ButtonVisualStyle = "Flat"
       item.Legend = legend or name
@@ -931,6 +933,9 @@ function Runtime.install(env)
 
   local function update_connection(status, err)
     state:set_connection(status, err)
+    local codes = { OK = 0, Fault = 2, Disconnected = 3, Missing = 4,
+      Connecting = 5, Reconnecting = 5, ["Connected / Synchronizing"] = 5 }
+    set_value("Connection Status", codes[status] or 2)
     set_string("Connection Status", status)
     set_string("Last Error", err or "")
     set_bool("Connected", status == "OK" or status == "Connected / Synchronizing")
@@ -1099,7 +1104,7 @@ function Runtime.install(env)
       return
     end
     intentional_disconnect = false
-    if state.connection ~= "Missing" then update_connection("Connecting") end
+    update_connection((state.connection == "Missing" or state.connection == "Reconnecting") and "Reconnecting" or "Connecting")
     sock:Connect(ip, port or 2202)
   end
 
@@ -1153,7 +1158,10 @@ function Runtime.install(env)
       request_initial_state()
     end
     sock.Reconnect = function()
-      if not intentional_disconnect then missing("TCP reconnecting") end
+      if not intentional_disconnect then
+        missing("TCP reconnecting")
+        update_connection("Reconnecting")
+      end
     end
     sock.Closed = function()
       if intentional_disconnect then update_connection("Disconnected")

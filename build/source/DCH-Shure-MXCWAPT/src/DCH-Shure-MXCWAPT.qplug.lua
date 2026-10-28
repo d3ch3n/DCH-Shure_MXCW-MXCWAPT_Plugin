@@ -1,7 +1,7 @@
 PluginInfo = {
   Name = "DCH~Shure~MXCW-MXCWAPT",
-  Version = "1.0.0",
-  BuildVersion = "1.0.0.0",
+  Version = "1.0.1",
+  BuildVersion = "1.0.1.0",
   ShowDebug = false,
   Id = "dch.shure.mxcwapt.control",
   Author = "DCH",
