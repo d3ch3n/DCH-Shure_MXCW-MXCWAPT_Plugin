@@ -6,6 +6,8 @@ The plugin communicates directly with the MXCWAPT over the official Shure comman
 
 Q-SYS Designer plugin name: `DCH~Shure~MXCW-MXCWAPT`, shown under `DCH > Shure > MXCW-MXCWAPT`.
 
+Current plugin version: `1.0.0` (build `1.0.0.0`). This release includes optional individual microphone pages, Dante channel labels in both rows, and confirmed `OK` / `Missing` connection monitoring. Hardware validation is still required.
+
 ## Supported Equipment
 
 - Shure MXCWAPT Microflex Complete Wireless Access Point

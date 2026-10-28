@@ -9,7 +9,7 @@ assert(not source:find("__DECHEN_LOGO_BASE64__", 1, true), "Dechen logo was not 
 
 local function environment()
   return {
-    assert = assert, error = error, ipairs = ipairs, pairs = pairs, next = next,
+    assert = assert, error = error, pcall = pcall, ipairs = ipairs, pairs = pairs, next = next,
     tonumber = tonumber, tostring = tostring, type = type, select = select,
     setmetatable = setmetatable,
     math = math, string = string, table = table,
